@@ -1,378 +1,407 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmeshGram Pro — Ultra Stable</title>
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Send, 
+  Search, 
+  User, 
+  Settings, 
+  Smile, 
+  Star, 
+  Check, 
+  CheckCheck, 
+  MoreVertical,
+  LogOut,
+  Zap,
+  Camera,
+  Paperclip,
+  Cpu,
+  ShieldCheck,
+  Plus,
+  Bot
+} from 'lucide-react';
+
+const STICKER_PACKS = [
+  { id: 'classic', name: 'Smesh Classic', icons: ['😎', '🚀', '💎', '🔥', '👑', '🥑', '😂', '💀'] },
+  { id: 'prime', name: 'Prime Exclusive', icons: ['🛸', '🪐', '🧬', '⚡', '🌈', '🦄', '🎭', '🔮'] }
+];
+
+const App = () => {
+  // Состояния авторизации
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('smesh_isLoggedIn') === 'true');
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('smesh_user') || 'null'));
+  
+  // Интерфейс
+  const [activeChat, setActiveChat] = useState(null);
+  const [message, setMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showStickers, setShowStickers] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showAiMenu, setShowAiMenu] = useState(false);
+
+  // Настройки профиля
+  const [profileData, setProfileData] = useState(() => JSON.parse(localStorage.getItem('smesh_profile_data') || JSON.stringify({
+    avatar: 'S',
+    bio: 'Пользователь SmeshGram',
+    color: '#3b82f6',
+    username: 'user'
+  })));
+
+  const [authForm, setAuthForm] = useState({ username: '', password: '' });
+
+  // Список чатов и пользователей
+  const [allUsers] = useState([
+    { id: 1, name: 'Павел Дуров', username: 'durov', isOnline: true, avatar: 'P', color: '#0088cc' },
+    { id: 2, name: 'Smesh AI', username: 'ai_bot', isOnline: true, avatar: '🤖', color: '#10b981', isBot: true },
+    { id: 3, name: 'Крипто Инвестор', username: 'crypto_king', isOnline: false, avatar: 'C', color: '#f59e0b' },
+    { id: 4, name: 'Разработка Smesh', username: 'dev_team', isOnline: true, avatar: 'S', color: '#6366f1' },
+  ]);
+
+  const [chats, setChats] = useState(allUsers);
+
+  // Сообщения
+  const [messages, setMessages] = useState({
+    1: [{ id: 1, text: 'Привет! SmeshGram — это будущее.', sender: 'them', time: '12:44', type: 'text' }],
+    2: [{ id: 2, text: 'Я Smesh AI. Могу помочь создать нейросеть или ответить на вопросы.', sender: 'them', time: '10:00', type: 'text' }]
+  });
+
+  const scrollRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, activeChat]);
+
+  useEffect(() => {
+    localStorage.setItem('smesh_isLoggedIn', isLoggedIn);
+    if (user) localStorage.setItem('smesh_user', JSON.stringify(user));
+    localStorage.setItem('smesh_profile_data', JSON.stringify(profileData));
+  }, [isLoggedIn, user, profileData]);
+
+  // Фильтрация (поиск по юзернейму)
+  const filteredChats = chats.filter(c => 
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    c.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const userData = { username: authForm.username, isPrime: true };
+    setUser(userData);
+    setProfileData(prev => ({ ...prev, username: authForm.username, avatar: authForm.username[0].toUpperCase() }));
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.clear();
+    window.location.reload();
+  };
+
+  const sendMessage = (content, type = 'text', sender = 'me') => {
+    if (type === 'text' && !content.trim()) return;
     
-    <!-- Скрипты -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Firebase SDK (Compat versions for maximum stability) -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        
-        :root {
-            --bg-dark: #020617;
-            --glass: rgba(15, 23, 42, 0.7);
-            --accent: #3b82f6;
-        }
-
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: var(--bg-dark); 
-            color: #f8fafc; 
-            margin: 0; 
-            height: 100vh;
-            overflow: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .glass-panel { 
-            background: var(--glass); 
-            backdrop-filter: blur(16px); 
-            border: 1px solid rgba(255, 255, 255, 0.05); 
-        }
-
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-        @keyframes messageAppear {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message-bubble { 
-            animation: messageAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            max-width: 85%;
-            word-wrap: break-word;
-        }
-
-        .btn-active:active { transform: scale(0.95); }
-    </style>
-</head>
-<body class="flex flex-col h-screen">
-
-    <!-- App Container -->
-    <div id="app-root" class="flex flex-1 overflow-hidden relative">
-        
-        <!-- Sidebar (Hidden on mobile by default) -->
-        <aside id="sidebar" class="w-80 glass-panel border-r border-slate-800/50 hidden md:flex flex-col z-20">
-            <div class="p-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/40">
-                        <i data-lucide="zap" class="w-6 h-6 text-white fill-white"></i>
-                    </div>
-                    <h1 class="text-2xl font-black italic tracking-tighter text-white">SMESH<span class="text-blue-500">GRAM</span></h1>
-                </div>
-            </div>
-
-            <div class="flex-1 px-4 overflow-y-auto custom-scroll space-y-2">
-                <div class="p-4 bg-blue-600/10 border border-blue-500/20 rounded-2xl">
-                    <div class="flex justify-between items-center mb-1">
-                        <p class="font-bold text-sm text-white">Общий чат</p>
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    </div>
-                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Весь мир на связи</p>
-                </div>
-            </div>
-
-            <div class="p-6 border-t border-slate-800 bg-slate-900/30">
-                <div class="flex items-center gap-3">
-                    <div id="user-avatar" class="w-11 h-11 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center font-bold text-white uppercase text-lg">?</div>
-                    <div class="min-w-0">
-                        <p id="user-name-display" class="font-bold text-sm truncate text-white">Загрузка...</p>
-                        <p id="auth-status" class="text-[9px] text-amber-500 font-black uppercase tracking-wider">Подключение...</p>
-                    </div>
-                    <button onclick="toggleSettings()" class="ml-auto p-2 hover:bg-slate-800 rounded-xl transition-colors">
-                        <i data-lucide="settings-2" class="w-5 h-5 text-slate-400"></i>
-                    </button>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Chat Area -->
-        <main class="flex-1 flex flex-col bg-[#020617] relative">
-            
-            <!-- Header -->
-            <header class="h-16 glass-panel border-b border-slate-800/50 flex items-center justify-between px-6 z-10">
-                <div class="flex items-center gap-4">
-                    <button onclick="toggleSidebar()" class="md:hidden p-2 -ml-2 text-slate-400">
-                        <i data-lucide="menu" class="w-6 h-6"></i>
-                    </button>
-                    <div>
-                        <h2 class="font-black text-xs uppercase tracking-[0.2em] text-blue-500">Глобальный Канал</h2>
-                        <p id="online-count" class="text-[10px] text-slate-500 font-bold uppercase">Облачный чат</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-slate-900 rounded-full border border-slate-800">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Stable v2.6</span>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Messages List -->
-            <div id="chat-scroller" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scroll">
-                <div id="status-message" class="flex flex-col items-center justify-center h-full text-slate-600">
-                    <div class="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-                    <p class="text-[10px] font-bold uppercase tracking-[0.3em]">Синхронизация потоков...</p>
-                </div>
-            </div>
-
-            <!-- Input Area -->
-            <div class="p-4 md:p-6 bg-slate-950/80 backdrop-blur-xl border-t border-slate-900">
-                <div class="max-w-5xl mx-auto flex items-end gap-3">
-                    <div class="flex-1 relative">
-                        <textarea id="msg-input" rows="1" placeholder="Ваше сообщение..." 
-                            class="w-full bg-slate-900/50 border border-slate-800 rounded-2xl px-5 py-3.5 pr-12 outline-none focus:border-blue-500/50 transition-all text-sm text-white resize-none max-h-32 custom-scroll"></textarea>
-                    </div>
-                    <button id="send-btn" class="w-12 h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl flex items-center justify-center transition-all active:scale-90 shadow-lg shadow-blue-600/20 btn-active">
-                        <i data-lucide="send" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Settings Overlay -->
-    <div id="settings-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-sm rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
-            <div class="flex justify-between items-start mb-8">
-                <h3 class="text-2xl font-black italic text-white uppercase tracking-tighter">Настройки</h3>
-                <button onclick="toggleSettings()" class="p-2 hover:bg-white/10 rounded-full transition-colors">
-                    <i data-lucide="x" class="w-6 h-6 text-slate-400"></i>
-                </button>
-            </div>
-            
-            <div class="space-y-4">
-                <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
-                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2 block">Ваше имя</label>
-                    <input id="name-input" type="text" class="w-full bg-transparent border-b border-slate-700 py-2 outline-none focus:border-blue-500 text-white font-bold transition-all">
-                </div>
-
-                <button onclick="togglePrime()" id="prime-toggle" class="w-full p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 flex items-center justify-between group transition-all hover:bg-amber-500/10">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="crown" class="w-5 h-5 text-amber-500"></i>
-                        <span class="text-sm font-bold text-amber-500">SmeshGram PRIME</span>
-                    </div>
-                    <div id="prime-status-dot" class="w-3 h-3 rounded-full bg-slate-700 border-2 border-slate-900"></div>
-                </button>
-            </div>
-
-            <div class="mt-10 flex flex-col gap-3">
-                <button onclick="saveSettings()" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all btn-active shadow-xl shadow-blue-600/20">
-                    Сохранить изменения
-                </button>
-            </div>
-        </div>
-    </div>
-
-<script>
-    // --- Инициализация и Конфигурация ---
-    let firebaseConfig;
-    try {
-        firebaseConfig = JSON.parse(__firebase_config);
-    } catch(e) {
-        alert("Ошибка конфигурации Firebase");
-    }
-
-    const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'smeshgram-v1-stable';
-    const COLLECTION_PATH = `artifacts/${APP_ID}/public/data/messages`;
-
-    // Локальные данные
-    let state = {
-        userName: localStorage.getItem('sg_name') || 'Анонимный Смеш',
-        isPrime: localStorage.getItem('sg_prime') === 'true',
-        userId: null
+    const newMsg = {
+      id: Date.now(),
+      text: content,
+      sender: sender,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      type: type
     };
 
-    // --- Firebase Core ---
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
+    setMessages(prev => ({
+      ...prev,
+      [activeChat]: [...(prev[activeChat] || []), newMsg]
+    }));
+
+    if (sender === 'me') {
+      setMessage('');
+      setShowStickers(false);
+      
+      // Имитация ответа AI
+      if (activeChat === 2) {
+        setTimeout(() => {
+          sendMessage(`Вы сказали: "${content}". Я обрабатываю ваш запрос в Smesh Core...`, 'text', 'them');
+        }, 1000);
+      }
     }
-    const db = firebase.firestore();
-    const auth = firebase.auth();
+  };
 
-    // --- Функции UI ---
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('hidden');
-        document.getElementById('sidebar').classList.toggle('flex');
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Имитация загрузки до 10ГБ
+      const sizeGB = (file.size / (1024 * 1024 * 1024)).toFixed(2);
+      sendMessage(`Файл: ${file.name} (${sizeGB} GB)`, 'file');
     }
+  };
 
-    function toggleSettings() {
-        const modal = document.getElementById('settings-modal');
-        modal.classList.toggle('hidden');
-        if (!modal.classList.contains('hidden')) {
-            document.getElementById('name-input').value = state.userName;
-            updatePrimeUI();
-        }
-    }
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center p-4 text-white">
+        <div className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl">
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-500/20 mb-4 animate-pulse">
+              <Zap size={40} fill="white" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tighter italic uppercase">SmeshGram</h1>
+            <p className="text-slate-500 text-sm mt-2">Ultra-Secure Messenger</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input 
+              type="text" placeholder="Юзернейм" required
+              className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              onChange={e => setAuthForm({...authForm, username: e.target.value})}
+            />
+            <input 
+              type="password" placeholder="Пароль" required
+              className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              onChange={e => setAuthForm({...authForm, password: e.target.value})}
+            />
+            <button className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-transform active:scale-95">Войти</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
-    function updatePrimeUI() {
-        const dot = document.getElementById('prime-status-dot');
-        dot.className = state.isPrime 
-            ? 'w-3 h-3 rounded-full bg-amber-500 border-2 border-amber-900 shadow-[0_0_8px_rgba(245,158,11,0.5)]' 
-            : 'w-3 h-3 rounded-full bg-slate-700 border-2 border-slate-900';
-    }
+  return (
+    <div className="flex h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans selection:bg-blue-500/30">
+      
+      {/* Левая панель */}
+      <div className={`w-full md:w-80 lg:w-96 flex flex-col border-r border-white/5 ${activeChat && 'hidden md:flex'}`}>
+        <div className="p-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setShowProfile(true)} className="relative group">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white shadow-xl transition-all group-hover:rotate-6" style={{ backgroundColor: profileData.color }}>
+                {profileData.avatar}
+              </div>
+              <div className="absolute -bottom-1 -right-1 bg-yellow-400 rounded-lg p-1 border-2 border-[#020617] shadow-lg">
+                <Star size={10} fill="black" stroke="none" />
+              </div>
+            </button>
+            <div>
+              <h2 className="font-black text-lg leading-none uppercase italic tracking-tight">SmeshGram</h2>
+              <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Prime Active</span>
+            </div>
+          </div>
+          <button onClick={() => setShowAiMenu(!showAiMenu)} className="p-3 bg-white/5 hover:bg-blue-500/10 rounded-xl transition-colors">
+            <Cpu size={20} className="text-blue-400" />
+          </button>
+        </div>
 
-    function togglePrime() {
-        state.isPrime = !state.isPrime;
-        updatePrimeUI();
-    }
+        <div className="px-6 mb-6">
+          <div className="relative group">
+            <Search className="absolute left-4 top-3.5 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={18} />
+            <input 
+              type="text" placeholder="Найти по @юзернейму..."
+              className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 pl-12 pr-4 focus:ring-1 focus:ring-blue-500/50 outline-none text-sm transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
 
-    function saveSettings() {
-        const newName = document.getElementById('name-input').value.trim();
-        if (newName) {
-            state.userName = newName;
-            localStorage.setItem('sg_name', state.userName);
-            localStorage.setItem('sg_prime', state.isPrime);
-            updateProfileUI();
-            toggleSettings();
-        }
-    }
-
-    function updateProfileUI() {
-        document.getElementById('user-name-display').innerText = state.userName;
-        document.getElementById('user-avatar').innerText = state.userName[0];
-        document.getElementById('user-avatar').style.backgroundColor = state.isPrime ? '#f59e0b' : '#2563eb';
-    }
-
-    // --- Логика чата ---
-    async function sendMessage() {
-        const input = document.getElementById('msg-input');
-        const text = input.value.trim();
-        if (!text || !state.userId) return;
-
-        input.value = '';
-        input.style.height = 'auto';
-
-        try {
-            await db.collection(COLLECTION_PATH).add({
-                text: text,
-                sender: state.userName,
-                uid: state.userId,
-                prime: state.isPrime,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        } catch (e) {
-            console.error("Ошибка отправки:", e);
-        }
-    }
-
-    function listenForMessages() {
-        // Правило: Fetch all then sort in memory to avoid index requirements
-        db.collection(COLLECTION_PATH)
-            .onSnapshot(snapshot => {
-                const messages = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.timestamp) messages.push(data);
-                });
-
-                // Сортировка по времени
-                messages.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis());
-
-                renderMessages(messages);
-            }, err => {
-                console.error("Ошибка Firestore:", err);
-                if (err.code === 'permission-denied') {
-                    document.getElementById('status-message').innerHTML = '<p class="text-red-500 uppercase text-[9px] font-black">Ошибка доступа: проверьте APP_ID</p>';
-                }
-            });
-    }
-
-    function renderMessages(messages) {
-        const container = document.getElementById('chat-scroller');
-        if (messages.length > 0) {
-            container.innerHTML = '';
-        } else {
-            container.innerHTML = '<div class="h-full flex items-center justify-center text-slate-700 uppercase text-[9px] font-bold tracking-widest">Сообщений пока нет...</div>';
-            return;
-        }
-
-        messages.forEach(msg => {
-            const isMe = msg.uid === state.userId;
-            const msgEl = document.createElement('div');
-            msgEl.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1`;
-            
-            const time = msg.timestamp ? new Date(msg.timestamp.toMillis()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...';
-
-            msgEl.innerHTML = `
-                <div class="flex items-center gap-2 px-2">
-                    <span class="text-[9px] font-bold uppercase ${msg.prime ? 'text-amber-500' : 'text-slate-500'} tracking-wider">${msg.sender}</span>
-                    ${msg.prime ? '<i data-lucide="crown" class="w-2.5 h-2.5 text-amber-500"></i>' : ''}
-                    <span class="text-[8px] text-slate-700">${time}</span>
+        <div className="flex-1 overflow-y-auto px-2 space-y-1">
+          {filteredChats.map(chat => (
+            <div 
+              key={chat.id} onClick={() => setActiveChat(chat.id)}
+              className={`flex items-center gap-4 p-4 rounded-3xl cursor-pointer transition-all ${activeChat === chat.id ? 'bg-blue-600 shadow-xl shadow-blue-600/20' : 'hover:bg-white/5'}`}
+            >
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black text-white shadow-inner shrink-0" style={{ backgroundColor: chat.color }}>
+                {chat.avatar}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center mb-1">
+                  <h3 className="font-bold truncate text-sm uppercase tracking-tight">{chat.name}</h3>
+                  {chat.isOnline && <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_10px_#22c55e]"></div>}
                 </div>
-                <div class="message-bubble ${isMe ? 'bg-blue-600 text-white rounded-2xl rounded-tr-none shadow-lg shadow-blue-900/10' : 'bg-slate-800 text-slate-100 rounded-2xl rounded-tl-none border border-white/5'} px-4 py-2.5 text-sm leading-relaxed">
-                    ${escapeHTML(msg.text)}
+                <p className={`text-xs truncate ${activeChat === chat.id ? 'text-white/80' : 'text-slate-500'}`}>@{chat.username}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Основной чат */}
+      <div className={`flex-1 flex flex-col relative ${!activeChat && 'hidden md:flex'}`}>
+        {activeChat ? (
+          <>
+            <div className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-[#020617]/80 backdrop-blur-xl z-10">
+              <div className="flex items-center gap-4">
+                <button onClick={() => setActiveChat(null)} className="md:hidden p-2"><User /></button>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ backgroundColor: chats.find(c => c.id === activeChat)?.color }}>
+                  {chats.find(c => c.id === activeChat)?.avatar}
                 </div>
-            `;
-            container.appendChild(msgEl);
-        });
-        
-        lucide.createIcons();
-        container.scrollTop = container.scrollHeight;
-    }
+                <div>
+                  <h3 className="font-black text-sm uppercase tracking-widest">{chats.find(c => c.id === activeChat)?.name}</h3>
+                  <span className="text-[10px] text-green-500 font-bold uppercase">Online • E2E Encrypted</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button className="p-2 text-slate-500 hover:text-white"><ShieldCheck size={20} /></button>
+                <button className="p-2 text-slate-500 hover:text-white"><MoreVertical size={20} /></button>
+              </div>
+            </div>
 
-    function escapeHTML(str) {
-        const p = document.createElement('p');
-        p.textContent = str;
-        return p.innerHTML;
-    }
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-6">
+              {(messages[activeChat] || []).map((msg) => (
+                <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`group relative max-w-[70%] ${msg.type === 'sticker' ? 'text-8xl' : ''}`}>
+                    <div className={`px-6 py-4 rounded-[2rem] shadow-2xl ${
+                      msg.type === 'sticker' ? '' :
+                      msg.sender === 'me' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white/5 text-slate-200 rounded-tl-none border border-white/5'
+                    }`}>
+                      {msg.type === 'file' && <Paperclip size={16} className="inline mr-2" />}
+                      {msg.text}
+                    </div>
+                    <span className="absolute -bottom-5 right-2 text-[10px] font-bold text-slate-600 uppercase">{msg.time}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-    // --- Инициализация ---
-    async function initApp() {
-        lucide.createIcons();
-        updateProfileUI();
+            <div className="p-6">
+              <div className="max-w-4xl mx-auto flex items-center gap-4 bg-white/5 p-2 rounded-[2.5rem] border border-white/10 focus-within:border-blue-500/50 transition-all">
+                <button onClick={() => setShowStickers(!showStickers)} className="p-3 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition-all">
+                  <Smile size={24} />
+                </button>
+                <button onClick={() => fileInputRef.current.click()} className="p-3 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-full transition-all">
+                  <Paperclip size={24} />
+                  <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+                </button>
+                <input 
+                  type="text" placeholder="Smesh-сообщение..."
+                  className="flex-1 bg-transparent border-none outline-none text-white py-3 px-2 font-medium"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage(message)}
+                />
+                <button onClick={() => sendMessage(message)} className="p-4 bg-blue-600 hover:bg-blue-500 rounded-3xl text-white shadow-xl shadow-blue-600/20 active:scale-95 transition-all">
+                  <Send size={20} />
+                </button>
+              </div>
+              <p className="text-center text-[9px] text-slate-700 font-bold uppercase mt-4 tracking-[0.3em]">Лимит файлов: 10GB • Smesh Prime Encryption</p>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center">
+             <div className="w-24 h-24 bg-white/5 rounded-[2.5rem] flex items-center justify-center mb-6 border border-white/5 shadow-2xl">
+                <Zap size={40} className="text-slate-700" />
+             </div>
+             <p className="bg-blue-500/10 text-blue-400 px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest border border-blue-500/20">Выберите чат или начните поиск</p>
+          </div>
+        )}
+      </div>
 
-        // Авторизация
-        try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await auth.signInWithCustomToken(__initial_auth_token);
-            } else {
-                await auth.signInAnonymously();
-            }
-        } catch (e) {
-            console.error("Auth failed:", e);
-        }
+      {/* Панель стикеров */}
+      {showStickers && (
+        <div className="absolute bottom-28 left-10 md:left-auto md:right-auto z-20 w-80 bg-slate-900 border border-white/10 rounded-[2rem] p-4 shadow-3xl animate-in slide-in-from-bottom-5">
+           {STICKER_PACKS.map(pack => (
+             <div key={pack.id} className="mb-4">
+                <h4 className="text-[10px] font-black uppercase text-slate-500 mb-2 px-2">{pack.name}</h4>
+                <div className="grid grid-cols-4 gap-2">
+                  {pack.icons.map(icon => (
+                    <button key={icon} onClick={() => sendMessage(icon, 'sticker')} className="text-3xl p-2 hover:bg-white/5 rounded-xl transition-all hover:scale-125">
+                      {icon}
+                    </button>
+                  ))}
+                </div>
+             </div>
+           ))}
+        </div>
+      )}
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                state.userId = user.uid;
-                document.getElementById('auth-status').innerText = 'В СЕТИ';
-                document.getElementById('auth-status').className = 'text-[9px] text-emerald-500 font-black uppercase tracking-wider';
-                listenForMessages();
-            }
-        });
+      {/* Меню Smesh AI */}
+      {showAiMenu && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-slate-900 w-full max-w-lg rounded-[3rem] border border-white/10 overflow-hidden">
+            <div className="p-8 space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-blue-600 rounded-3xl shadow-xl shadow-blue-600/20"><Cpu size={32} /></div>
+                <div>
+                  <h2 className="text-2xl font-black italic uppercase italic tracking-tighter">Smesh Core AI</h2>
+                  <p className="text-slate-500 text-xs font-bold uppercase">Центр управления нейросетями</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <button className="p-6 bg-white/5 hover:bg-white/10 border border-white/5 rounded-3xl text-left space-y-2 transition-all">
+                  <Bot className="text-blue-400" />
+                  <h4 className="font-bold text-sm">Создать бота</h4>
+                  <p className="text-[10px] text-slate-500">Обучите свою нейросеть</p>
+                </button>
+                <button className="p-6 bg-white/5 hover:bg-white/10 border border-white/5 rounded-3xl text-left space-y-2 transition-all">
+                  <Zap className="text-amber-400" />
+                  <h4 className="font-bold text-sm">Smesh Prime</h4>
+                  <p className="text-[10px] text-slate-500">Улучшить аккаунт</p>
+                </button>
+              </div>
+              <button onClick={() => setShowAiMenu(false)} className="w-full py-4 bg-white/5 rounded-2xl font-black uppercase text-xs tracking-widest">Закрыть</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-        // Обработчики событий
-        document.getElementById('send-btn').onclick = sendMessage;
-        
-        const input = document.getElementById('msg-input');
-        input.onkeydown = (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        };
+      {/* Профиль */}
+      {showProfile && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[70] flex items-center justify-center p-4">
+          <div className="bg-slate-900 w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl border border-white/10 animate-in zoom-in duration-200">
+            <div className="h-32 relative" style={{ backgroundColor: profileData.color }}>
+               <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
+            </div>
+            <div className="px-8 pb-10 -mt-16 relative">
+              <div className="relative inline-block group">
+                <div 
+                  className="w-28 h-28 rounded-[2.5rem] flex items-center justify-center text-5xl font-black text-white shadow-2xl border-8 border-slate-900 transition-transform group-hover:scale-105"
+                  style={{ backgroundColor: profileData.color }}
+                >
+                  {profileData.avatar}
+                </div>
+                <button className="absolute -bottom-2 -right-2 bg-blue-600 p-3 rounded-2xl border-4 border-slate-900 shadow-xl text-white hover:bg-blue-500">
+                   <Camera size={18} />
+                </button>
+              </div>
+              
+              <div className="mt-6 space-y-6">
+                <div>
+                  <h2 className="text-3xl font-black italic uppercase tracking-tighter">{user?.username}</h2>
+                  <p className="text-blue-500 text-xs font-bold uppercase tracking-widest mt-1">@smesh_prime_id_{profileData.username}</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Символ Аватара</label>
+                    <input 
+                      type="text" maxLength="1"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 px-6 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                      value={profileData.avatar}
+                      onChange={(e) => setProfileData({...profileData, avatar: e.target.value.toUpperCase()})}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Цвет профиля</label>
+                    <div className="flex gap-3 py-2">
+                      {['#3b82f6', '#10b981', '#f43f5e', '#a855f7', '#f59e0b', '#ffffff'].map(c => (
+                        <button 
+                          key={c} onClick={() => setProfileData({...profileData, color: c})}
+                          className={`w-10 h-10 rounded-xl transition-all ${profileData.color === c ? 'ring-4 ring-blue-500/50 scale-110 shadow-lg' : 'opacity-50 hover:opacity-100'}`}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-4 pt-4">
+                  <button onClick={() => setShowProfile(false)} className="flex-1 bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 active:scale-95 transition-all">Сохранить</button>
+                  <button onClick={handleLogout} className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all">
+                    <LogOut size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
-        input.oninput = function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        };
-    }
-
-    // Запуск после загрузки DOM
-    window.addEventListener('load', initApp);
-</script>
-</body>
-</html>
+export default App;

@@ -1,420 +1,362 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Send, Search, User, Settings, Smile, Star, Check, CheckCheck, 
-  MoreVertical, LogOut, Zap, Camera, Paperclip, Cpu, ShieldCheck, 
-  Plus, Bot, MessageSquare, Globe, ArrowRight, X
-} from 'lucide-react';
+import { Send, Search, Settings, Smile, MoreVertical, Zap, LogOut } from 'lucide-react';
 
-// --- КОНФИГУРАЦИЯ ---
-const APP_ID = "smesh-gram-ultra";
 const MASCOT_URL = "https://i.ibb.co/XfXkY8S/Gemini-Generated-Image-nnd32mnnd32mnnd3.jpg";
 
-const STICKER_PACKS = [
-  { id: 'classic', name: 'Smesh Classic', icons: ['🔥', '🚀', '💎', '👑', '🦁', '🛸', '🎯', '⚡', '🌈', '🥑', '👾', '🪐'] },
-  { id: 'prime', name: 'Prime Exclusive', icons: ['💎', '🌟', '✨', '🏆', '⚡', '🌈', '🎨', '🚀', '🛸', '👾', '👑', '🧿'] }
-];
-
-// --- ГЛАВНОЕ ПРИЛОЖЕНИЕ ---
 export default function App() {
-  // Состояния
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
-  
-  // Интерфейс
-  const [activeChat, setActiveChat] = useState(null);
-  const [message, setMessage] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showStickers, setShowStickers] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-  const [showAiMenu, setShowAiMenu] = useState(false);
-  
-  // Данные профиля
-  const [profileData, setProfileData] = useState({
-    username: 'User',
-    bio: 'Пользователь SmeshGram',
-    color: '#3b82f6',
-    avatar: 'U',
-    isBot: false,
-    isPrime: false
-  });
-
-  const [authForm, setAuthForm] = useState({ username: '', password: '' });
-  const [chats, setChats] = useState([
-    { id: 1, name: 'Павел Дуров', username: 'durov', isOnline: true, avatar: 'P', color: '#0088cc', lastMsg: 'SmeshGram — это будущее.', time: '12:44', type: 'text' },
-    { id: 2, name: 'Smesh AI', username: 'ai_bot', isOnline: true, avatar: '🤖', color: '#3b82f6', lastMsg: 'Я готов помочь с нейросетями.', time: '10:00', type: 'text', isBot: true },
-    { id: 3, name: 'Крипто Инвестор', username: 'crypto_king', isOnline: false, avatar: 'C', color: '#f59e0b', lastMsg: 'Заценил файлы на 10ГБ!', time: 'Вчера', type: 'text' },
-    { id: 4, name: 'Разработка Smesh', username: 'dev_team', isOnline: true, avatar: 'S', color: '#6366f1', lastMsg: 'Обновление 2.5 уже в сети.', time: '08:20', type: 'text' },
-  ]);
-
-  const [messages, setMessages] = useState({
-    1: [{ id: 1, text: 'Привет! SmeshGram — это будущее.', sender: 'them', time: '12:44', type: 'text' }],
-    2: [{ id: 1, text: 'Я Smesh AI. Могу помочь создать нейросеть или ответить на вопросы.', sender: 'them', time: '10:00', type: 'text' }]
-  });
-
-  const scrollRef = useRef(null);
-
-  // Инициализация (Исправляем бесконечную загрузку)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      const savedAuth = localStorage.getItem('smesh_isLoggedIn');
-      if (savedAuth === 'true') {
-        setIsLoggedIn(true);
-        const savedUser = localStorage.getItem('smesh_user');
-        if (savedUser) setUser(JSON.parse(savedUser));
-      }
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Авто-скролл
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages, activeChat]);
-
-  // Хендлеры
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (!authForm.username.trim()) return;
-    const userData = { username: authForm.username, isPrime: true };
-    setUser(userData);
-    setIsLoggedIn(true);
-    setProfileData(prev => ({ ...prev, username: authForm.username, avatar: authForm.username[0].toUpperCase() }));
-    localStorage.setItem('smesh_isLoggedIn', 'true');
-    localStorage.setItem('smesh_user', JSON.stringify(userData));
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    localStorage.clear();
-  };
-
-  const sendMessage = (content, type = 'text', sender = 'me') => {
-    if (!activeChat) return;
-    const newMsg = {
-      id: Date.now(),
-      text: content,
-      sender: sender,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      type: type
-    };
+    const [isLoading, setIsLoading] = useState(true);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [user, setUser] = useState(null);
+    const [activeChat, setActiveChat] = useState(null);
+    const [message, setMessage] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [showProfile, setShowProfile] = useState(false);
     
-    setMessages(prev => ({
-      ...prev,
-      [activeChat]: [...(prev[activeChat] || []), newMsg]
-    }));
+    const [authForm, setAuthForm] = useState({ username: '' });
+    
+    // Данные хранятся в памяти, чтобы избежать ошибки безопасности localStorage в iframe
+    const [chats] = useState([
+        { id: 1, name: 'Павел Дуров', avatar: 'P', color: '#0088cc', lastMsg: 'SmeshGram — это будущее.', time: '12:44', isOnline: true },
+        { id: 2, name: 'Smesh AI', avatar: '🤖', color: '#3b82f6', lastMsg: 'Я готов помочь.', time: '10:00', isOnline: true },
+        { id: 3, name: 'Крипто Инвестор', avatar: 'C', color: '#f59e0b', lastMsg: 'Жду сигналы!', time: 'Вчера', isOnline: false }
+    ]);
 
-    // Ответ AI
-    if (activeChat === 2 && sender === 'me') {
-      setTimeout(() => {
-        sendMessage(`Я обработал ваш запрос: "${content}". Нейронная сеть готова.`, 'text', 'them');
-      }, 1000);
+    const [messages, setMessages] = useState({
+        1: [{ id: 1, text: 'Привет! SmeshGram — это будущее.', sender: 'them', time: '12:44' }],
+        2: [{ id: 1, text: 'Привет, Смеш! Я твой личный ИИ-ассистент.', sender: 'them', time: '10:00' }]
+    });
+
+    const scrollRef = useRef(null);
+
+    // Имитация загрузки
+    useEffect(() => {
+        const timer = setTimeout(() => setIsLoading(false), 1500);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Автоскролл вниз при новом сообщении
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [messages, activeChat]);
+
+    const handleLogin = (e) => {
+        e.preventDefault();
+        if (!authForm.username.trim()) return;
+        setUser({ username: authForm.username });
+        setIsLoggedIn(true);
+    };
+
+    const handleLogout = () => {
+        setIsLoggedIn(false);
+        setUser(null);
+        setShowProfile(false);
+        setActiveChat(null);
+    };
+
+    const sendMessage = () => {
+        if (!activeChat || !message.trim()) return;
+        
+        const newMsg = {
+            id: Date.now(),
+            text: message,
+            sender: 'me',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        
+        setMessages(prev => ({
+            ...prev,
+            [activeChat]: [...(prev[activeChat] || []), newMsg]
+        }));
+        
+        setMessage("");
+
+        // Ответ от ИИ, если активен чат №2
+        if (activeChat === 2) {
+            setTimeout(() => {
+                const aiReply = {
+                    id: Date.now() + 1,
+                    text: "Принял! Выполняю нейро-обработку твоего запроса...",
+                    sender: 'them',
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+                setMessages(prev => ({
+                    ...prev,
+                    2: [...(prev[2] || []), aiReply]
+                }));
+            }, 1000);
+        }
+    };
+
+    // Экран загрузки
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center z-[100]">
+                <div className="w-24 h-24 border-4 border-blue-500/20 border-t-blue-500 rounded-[2rem] animate-spin flex items-center justify-center relative shadow-[0_0_50px_rgba(59,130,246,0.3)]">
+                    <div className="absolute inset-0 flex items-center justify-center animate-pulse rotate-[-100deg]">
+                        <Zap className="text-blue-500 fill-blue-500" size={32} />
+                    </div>
+                </div>
+                <h1 className="mt-8 text-2xl font-black italic text-white tracking-[0.3em] uppercase drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">
+                    Smesh<span className="text-blue-500">Gram</span>
+                </h1>
+                <p className="text-blue-500/50 mt-4 text-xs tracking-widest uppercase animate-pulse">Инициализация...</p>
+            </div>
+        );
     }
-  };
 
-  // ЭКРАН ЗАГРУЗКИ
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center z-[100]">
-        <div className="relative">
-          <div className="w-24 h-24 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Zap className="text-blue-500 fill-blue-500" size={32} />
-          </div>
-        </div>
-        <h1 className="mt-8 text-2xl font-black italic text-white tracking-widest animate-pulse">SMESH<span className="text-blue-500">GRAM</span></h1>
-        <p className="mt-2 text-slate-500 text-xs font-bold uppercase tracking-[0.3em]">Initializing Neural Link...</p>
-      </div>
-    );
-  }
-
-  // ЭКРАН ВХОДА
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600 rounded-full blur-[120px]"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-600 rounded-full blur-[120px]"></div>
-        </div>
-
-        <div className="max-w-md w-full bg-slate-900/50 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-10 relative z-10 shadow-2xl">
-          <div className="text-center mb-8">
-            <div className="w-32 h-32 mx-auto mb-6 rounded-full border-4 border-blue-500/30 overflow-hidden shadow-2xl shadow-blue-500/20 animate-float">
-               <img src={MASCOT_URL} alt="Mascot" className="w-full h-full object-cover" />
-            </div>
-            <h2 className="text-3xl font-black italic text-white uppercase tracking-tighter">Smesh<span className="text-blue-500">Gram</span></h2>
-            <p className="text-slate-400 text-sm mt-2">Вход в нейронную сеть</p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="relative group">
-               <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={18} />
-               <input 
-                type="text" 
-                placeholder="Идентификатор"
-                className="w-full bg-slate-800/50 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-all"
-                value={authForm.username}
-                onChange={e => setAuthForm({...authForm, username: e.target.value})}
-               />
-            </div>
-            <div className="relative group">
-               <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={18} />
-               <input 
-                type="password" 
-                placeholder="Ключ доступа"
-                className="w-full bg-slate-800/50 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-all"
-                value={authForm.password}
-                onChange={e => setAuthForm({...authForm, password: e.target.value})}
-               />
-            </div>
-            <button 
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest py-4 rounded-2xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 group"
-            >
-              Авторизоваться <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </button>
-          </form>
-
-          <div className="mt-8 pt-8 border-t border-white/5 text-center">
-             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Шифрование военного уровня включено</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ОСНОВНОЙ ИНТЕРФЕЙС
-  return (
-    <div className="h-screen bg-[#020617] text-slate-200 flex overflow-hidden font-sans">
-      
-      {/* Левая панель: Список чатов */}
-      <div className="w-full md:w-[400px] border-r border-white/5 flex flex-col bg-slate-900/20">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-               <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold cursor-pointer transition-transform hover:scale-110"
-                style={{ backgroundColor: profileData.color }}
-                onClick={() => setShowProfile(true)}
-               >
-                {profileData.avatar}
-               </div>
-               <h1 className="text-xl font-black italic tracking-tighter uppercase">Smesh<span className="text-blue-500">Gram</span></h1>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setShowAiMenu(!showAiMenu)} className={`p-2 rounded-xl transition-colors ${showAiMenu ? 'bg-blue-600 text-white' : 'hover:bg-white/5'}`}>
-                <Cpu size={20} />
-              </button>
-              <button className="p-2 hover:bg-white/5 rounded-xl transition-colors"><Settings size={20} /></button>
-            </div>
-          </div>
-
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={18} />
-            <input 
-              type="text" 
-              placeholder="Поиск по нейронной сети..."
-              className="w-full bg-slate-800/40 border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-blue-500/30 transition-all"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-3 space-y-1">
-          {chats.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).map(chat => (
-            <div 
-              key={chat.id}
-              onClick={() => setActiveChat(chat.id)}
-              className={`flex items-center gap-4 p-4 rounded-[1.5rem] cursor-pointer transition-all ${activeChat === chat.id ? 'bg-blue-600 shadow-xl shadow-blue-600/20 scale-[1.02]' : 'hover:bg-white/5'}`}
-            >
-              <div className="relative">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold shadow-inner" style={{ backgroundColor: chat.color }}>
-                  {chat.avatar}
-                </div>
-                {chat.isOnline && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#020617] rounded-full"></div>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center mb-1">
-                  <h3 className="font-black text-sm uppercase italic truncate">{chat.name}</h3>
-                  <span className={`text-[10px] font-bold ${activeChat === chat.id ? 'text-blue-100' : 'text-slate-500'}`}>{chat.time}</span>
-                </div>
-                <p className={`text-xs truncate ${activeChat === chat.id ? 'text-blue-100' : 'text-slate-400'}`}>
-                  {chat.isBot && <span className="bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded mr-1 text-[9px] font-black italic">AI</span>}
-                  {chat.lastMsg}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Правая панель: Чат */}
-      <div className="flex-1 flex flex-col relative bg-[#020617]">
-        {activeChat ? (
-          <>
-            {/* Хедер чата */}
-            <div className="p-4 border-b border-white/5 flex items-center justify-between backdrop-blur-md bg-slate-900/10 sticky top-0 z-20">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold" style={{ backgroundColor: chats.find(c => c.id === activeChat)?.color }}>
-                  {chats.find(c => c.id === activeChat)?.avatar}
-                </div>
-                <div>
-                  <h2 className="font-black uppercase italic text-sm tracking-tight">{chats.find(c => c.id === activeChat)?.name}</h2>
-                  <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">В сети • Neural Link Active</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                 <button className="p-2 hover:bg-white/5 rounded-xl transition-colors"><Camera size={20} /></button>
-                 <button className="p-2 hover:bg-white/5 rounded-xl transition-colors"><MoreVertical size={20} /></button>
-              </div>
-            </div>
-
-            {/* Сообщения */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
-              {(messages[activeChat] || []).map((msg, i) => (
-                <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2`}>
-                  <div className={`max-w-[70%] group relative ${msg.sender === 'me' ? 'items-end' : 'items-start'}`}>
-                    <div className={`p-4 rounded-[1.8rem] text-sm leading-relaxed shadow-lg ${
-                      msg.sender === 'me' 
-                        ? 'bg-blue-600 text-white rounded-tr-none' 
-                        : 'bg-slate-800 text-slate-100 rounded-tl-none border border-white/5'
-                    }`}>
-                      {msg.type === 'sticker' ? (
-                        <span className="text-4xl">{msg.text}</span>
-                      ) : (
-                        msg.text
-                      )}
+    // Экран входа
+    if (!isLoggedIn) {
+        return (
+            <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6 relative overflow-hidden font-sans">
+                {/* Эффекты свечения на фоне */}
+                <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px]"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px]"></div>
+                
+                <div className="max-w-md w-full bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-10 relative z-10 shadow-2xl text-center">
+                    <div className="relative inline-block mb-6">
+                        <div className="absolute inset-0 bg-blue-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                        <img 
+                            src={MASCOT_URL} 
+                            alt="Smesh Mascot" 
+                            className="w-32 h-32 mx-auto rounded-full border-4 border-[#020617] relative z-10 object-cover"
+                        />
                     </div>
-                    <div className={`flex items-center gap-2 mt-1 px-2 ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
-                      <span className="text-[9px] text-slate-500 font-bold uppercase">{msg.time}</span>
-                      {msg.sender === 'me' && <CheckCheck size={12} className="text-blue-500" />}
-                    </div>
-                  </div>
+                    
+                    <h2 className="text-4xl font-black italic text-white uppercase tracking-tighter mb-2">
+                        Smesh<span className="text-blue-500">Gram</span>
+                    </h2>
+                    <p className="text-slate-400 text-sm mb-8">Защищенная нейронная сеть</p>
+                    
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        <input 
+                            type="text" 
+                            placeholder="Введи никнейм"
+                            required
+                            className="w-full bg-slate-800/50 border border-white/5 rounded-2xl py-4 px-6 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+                            value={authForm.username}
+                            onChange={e => setAuthForm({ username: e.target.value })}
+                        />
+                        <button 
+                            type="submit"
+                            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest py-4 rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+                        >
+                            Войти в систему
+                        </button>
+                    </form>
                 </div>
-              ))}
+            </div>
+        );
+    }
+
+    const filteredChats = chats.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    // Главный интерфейс
+    return (
+        <div className="h-screen flex bg-[#020617] text-slate-200 overflow-hidden font-sans">
+            {/* Глобальные стили для скроллбара */}
+            <style>{`
+                ::-webkit-scrollbar { width: 6px; }
+                ::-webkit-scrollbar-track { background: transparent; }
+                ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.2); border-radius: 10px; }
+                ::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.5); }
+            `}</style>
+
+            {/* Боковая панель (список чатов) */}
+            <div className={`w-full md:w-[380px] border-r border-white/5 flex flex-col bg-[#0f172a]/50 backdrop-blur-md ${activeChat ? 'hidden md:flex' : 'flex'}`}>
+                {/* Шапка боковой панели */}
+                <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <button 
+                            onClick={() => setShowProfile(true)}
+                            className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg hover:scale-105 transition-transform"
+                        >
+                            {user.username[0].toUpperCase()}
+                        </button>
+                        <h1 className="text-xl font-black italic uppercase tracking-tighter">
+                            Smesh<span className="text-blue-500">Gram</span>
+                        </h1>
+                        <button className="text-slate-500 hover:text-white transition-colors">
+                            <Settings size={22} />
+                        </button>
+                    </div>
+                    <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                        <input 
+                            placeholder="Поиск..." 
+                            className="w-full bg-[#020617]/50 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                </div>
+                
+                {/* Список чатов */}
+                <div className="flex-1 overflow-y-auto px-3 pb-4">
+                    {filteredChats.map(chat => (
+                        <div 
+                            key={chat.id} 
+                            onClick={() => setActiveChat(chat.id)}
+                            className={`flex items-center gap-4 p-4 rounded-3xl cursor-pointer mb-2 transition-all ${
+                                activeChat === chat.id 
+                                ? 'bg-blue-600 shadow-lg shadow-blue-600/20' 
+                                : 'hover:bg-white/5'
+                            }`}
+                        >
+                            <div 
+                                className="w-14 h-14 rounded-[1.2rem] flex items-center justify-center font-bold text-xl relative shadow-inner" 
+                                style={{backgroundColor: chat.color}}
+                            >
+                                {chat.avatar}
+                                {chat.isOnline && (
+                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-4 border-[#0f172a] rounded-full"></div>
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="font-bold text-[15px] truncate text-white">{chat.name}</span>
+                                    <span className="text-[11px] text-slate-400 font-medium">{chat.time}</span>
+                                </div>
+                                <p className={`text-sm truncate ${activeChat === chat.id ? 'text-blue-100' : 'text-slate-400'}`}>
+                                    {chat.lastMsg}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
-            {/* Поле ввода */}
-            <div className="p-6 bg-slate-900/20 border-t border-white/5">
-              <div className="max-w-4xl mx-auto flex items-end gap-3 bg-slate-800/40 p-2 rounded-[2rem] border border-white/5 focus-within:border-blue-500/30 transition-all">
-                <div className="relative">
-                   <button 
-                    onClick={() => setShowStickers(!showStickers)}
-                    className={`p-3 rounded-full transition-colors ${showStickers ? 'bg-blue-600 text-white' : 'hover:bg-white/5 text-slate-400'}`}
-                   >
-                    <Smile size={22} />
-                  </button>
-                  {showStickers && (
-                    <div className="absolute bottom-full mb-4 left-0 bg-slate-900 border border-white/10 p-4 rounded-[2rem] shadow-2xl w-64 animate-in zoom-in-95">
-                       <div className="grid grid-cols-4 gap-2">
-                          {STICKER_PACKS[0].icons.map(s => (
-                            <button key={s} onClick={() => { sendMessage(s, 'sticker'); setShowStickers(false); }} className="text-2xl p-2 hover:bg-white/5 rounded-xl transition-all hover:scale-125">
-                              {s}
+            {/* Область чата */}
+            <div className={`flex-1 flex flex-col relative ${!activeChat ? 'hidden md:flex' : 'flex'}`}>
+                {activeChat ? (
+                    <>
+                        {/* Шапка чата */}
+                        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-[#0f172a]/80 backdrop-blur-md z-10">
+                            <div className="flex items-center gap-4">
+                                <button 
+                                    className="md:hidden text-slate-400 hover:text-white"
+                                    onClick={() => setActiveChat(null)}
+                                >
+                                    ← Назад
+                                </button>
+                                <div 
+                                    className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg" 
+                                    style={{backgroundColor: chats.find(c => c.id === activeChat).color}}
+                                >
+                                    {chats.find(c => c.id === activeChat).avatar}
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-white text-[16px]">
+                                        {chats.find(c => c.id === activeChat).name}
+                                    </h2>
+                                    <span className="text-[11px] text-green-400 font-medium tracking-wide">
+                                        В сети
+                                    </span>
+                                </div>
+                            </div>
+                            <button className="p-2 text-slate-400 hover:text-white rounded-full hover:bg-white/5 transition-colors">
+                                <MoreVertical size={20} />
                             </button>
-                          ))}
-                       </div>
+                        </div>
+
+                        {/* Сообщения */}
+                        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+                            {(messages[activeChat] || []).map(msg => (
+                                <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`max-w-[85%] md:max-w-[70%] p-4 text-[15px] shadow-xl ${
+                                        msg.sender === 'me' 
+                                        ? 'bg-blue-600 text-white rounded-[2rem] rounded-tr-sm' 
+                                        : 'bg-[#1e293b] text-slate-100 rounded-[2rem] rounded-tl-sm border border-white/5'
+                                    }`}>
+                                        <p className="leading-relaxed">{msg.text}</p>
+                                        <div className={`text-[10px] mt-2 font-medium ${
+                                            msg.sender === 'me' ? 'text-blue-200 text-right' : 'text-slate-400 text-right'
+                                        }`}>
+                                            {msg.time}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Поле ввода */}
+                        <div className="p-4 bg-[#0f172a]/80 backdrop-blur-md border-t border-white/5">
+                            <div className="max-w-4xl mx-auto flex items-center gap-2 bg-[#020617] p-2 rounded-full border border-white/10">
+                                <button className="p-3 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-white/5">
+                                    <Smile size={22} />
+                                </button>
+                                <input 
+                                    placeholder="Написать сообщение..." 
+                                    className="flex-1 bg-transparent border-none py-3 px-2 text-[15px] text-white focus:outline-none"
+                                    value={message}
+                                    onChange={e => setMessage(e.target.value)}
+                                    onKeyPress={e => e.key === 'Enter' && sendMessage()}
+                                />
+                                <button 
+                                    onClick={sendMessage} 
+                                    disabled={!message.trim()}
+                                    className="bg-blue-600 p-3 rounded-full text-white hover:bg-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                                >
+                                    <Send size={20} className="ml-1" />
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    /* Заглушка, когда чат не выбран */
+                    <div className="flex-1 flex flex-col items-center justify-center bg-[#020617]">
+                        <div className="relative mb-6">
+                            <div className="absolute inset-0 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
+                            <img src={MASCOT_URL} className="w-48 h-48 rounded-full border-4 border-white/5 relative z-10 grayscale opacity-50" />
+                        </div>
+                        <p className="text-slate-500 font-medium text-sm bg-[#0f172a] px-6 py-3 rounded-full border border-white/5">
+                            Выберите чат для начала общения
+                        </p>
                     </div>
-                  )}
-                </div>
+                )}
+            </div>
 
-                <input 
-                  type="text"
-                  placeholder="Написать сообщение..."
-                  className="flex-1 bg-transparent border-none py-3 px-2 text-sm focus:outline-none placeholder:text-slate-600"
-                  value={message}
-                  onChange={e => setMessage(e.target.value)}
-                  onKeyPress={e => e.key === 'Enter' && (sendMessage(message), setMessage(""))}
-                />
-
-                <button className="p-3 hover:bg-white/5 text-slate-400 rounded-full transition-colors"><Paperclip size={22} /></button>
-                <button 
-                  onClick={() => { if(message.trim()) { sendMessage(message); setMessage(""); } }}
-                  className="bg-blue-600 p-3 rounded-full text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all active:scale-90"
+            {/* Модальное окно профиля */}
+            {showProfile && (
+                <div 
+                    className="fixed inset-0 bg-[#020617]/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in fade-in duration-200" 
+                    onClick={() => setShowProfile(false)}
                 >
-                  <Send size={22} />
-                </button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-10">
-            <div className="w-48 h-48 mb-8 relative">
-               <div className="absolute inset-0 bg-blue-500/20 blur-[60px] animate-pulse"></div>
-               <img src={MASCOT_URL} alt="Mascot" className="w-full h-full object-cover rounded-full border-4 border-white/5 animate-float" />
-            </div>
-            <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-2">Добро пожаловать в <span className="text-blue-500">SmeshGram</span></h2>
-            <p className="text-slate-500 max-w-sm font-medium">Выберите нейронный канал для начала общения или создайте свой AI-проект.</p>
-            <div className="mt-10 grid grid-cols-3 gap-6">
-               <div className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-blue-400"><ShieldCheck /></div>
-                  <span className="text-[10px] font-black uppercase">Secure</span>
-               </div>
-               <div className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-purple-400"><Zap /></div>
-                  <span className="text-[10px] font-black uppercase">10GB Link</span>
-               </div>
-               <div className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-pink-400"><Bot /></div>
-                  <span className="text-[10px] font-black uppercase">Neural</span>
-               </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Модальное окно профиля */}
-      {showProfile && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-6" onClick={() => setShowProfile(false)}>
-           <div className="max-w-md w-full bg-slate-900 border border-white/10 rounded-[3rem] p-10 overflow-hidden relative" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setShowProfile(false)} className="absolute top-6 right-6 text-slate-500 hover:text-white"><X /></button>
-              <div className="flex flex-col items-center">
-                 <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center text-4xl font-black text-white mb-6 shadow-2xl" style={{ backgroundColor: profileData.color }}>
-                    {profileData.avatar}
-                 </div>
-                 <h2 className="text-2xl font-black italic uppercase tracking-tighter">{profileData.username}</h2>
-                 <p className="text-blue-500 text-xs font-black uppercase tracking-widest mt-1">Smesh Prime Member</p>
-                 
-                 <div className="w-full mt-10 space-y-4">
-                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                       <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Биометрика</label>
-                       <p className="text-sm font-medium">{profileData.bio}</p>
+                    <div 
+                        className="max-w-sm w-full bg-[#0f172a] border border-white/10 p-8 rounded-[2.5rem] text-center shadow-2xl relative" 
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            className="absolute top-6 right-6 text-slate-500 hover:text-white"
+                            onClick={() => setShowProfile(false)}
+                        >
+                            <Zap size={20} />
+                        </button>
+                        
+                        <div className="w-28 h-28 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[2rem] mx-auto mb-6 flex items-center justify-center text-4xl font-black text-white shadow-lg">
+                            {user.username[0].toUpperCase()}
+                        </div>
+                        
+                        <h2 className="text-2xl font-bold text-white mb-1">{user.username}</h2>
+                        <p className="text-sm text-blue-400 font-bold tracking-widest uppercase mb-8">Smesh Member</p>
+                        
+                        <div className="space-y-3">
+                            <div className="bg-[#020617] p-4 rounded-2xl border border-white/5 flex items-center justify-between text-sm">
+                                <span className="text-slate-400">Статус сети</span>
+                                <span className="text-green-400 font-medium">Зашифровано</span>
+                            </div>
+                            <button 
+                                className="w-full py-4 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500/20 font-bold transition-colors flex items-center justify-center gap-2" 
+                                onClick={handleLogout}
+                            >
+                                <LogOut size={18} />
+                                ВЫЙТИ ИЗ СИСТЕМЫ
+                            </button>
+                        </div>
                     </div>
-                    <button onClick={handleLogout} className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2">
-                       <LogOut size={16} /> Деавторизация
-                    </button>
-                 </div>
-              </div>
-           </div>
+                </div>
+            )}
         </div>
-      )}
-
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-15px) rotate(2deg); }
-        }
-        .animate-float {
-          animation: float 5s ease-in-out infinite;
-        }
-        ::-webkit-scrollbar {
-          width: 4px;
-        }
-        ::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0.05);
-          border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: rgba(59, 130, 246, 0.5);
-        }
-      `}</style>
-
-    </div>
-  );
+    );
 }

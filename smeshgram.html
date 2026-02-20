@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmeshGram Pro — Ultimate Edition</title>
+    <title>SmeshGram Pro — Enterprise Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -11,7 +11,8 @@
         
         :root {
             --primary: #3b82f6;
-            --bg-dark: #0f172a;
+            --bg-dark: #020617;
+            --glass: rgba(15, 23, 42, 0.8);
         }
 
         body { 
@@ -19,17 +20,25 @@
             background-color: var(--bg-dark); 
             color: #f8fafc;
             overflow: hidden;
+            height: 100vh;
         }
 
+        /* Кастомный скроллбар */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
         .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .chat-bubble-me {
             background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
         .chat-bubble-them {
@@ -37,441 +46,524 @@
             border: 1px solid #334155;
         }
 
-        .custom-loader {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
+        /* Анимация загрузки */
+        .loader-ring {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.1);
             border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+            border-top-color: #3b82f6;
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .sidebar-item.active {
-            background: rgba(59, 130, 246, 0.1);
-            border-left: 3px solid #3b82f6;
+        .btn-loading {
+            pointer-events: none;
+            opacity: 0.7;
         }
 
-        .shimmer {
-            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
+        .message-appear {
+            animation: slideUp 0.3s ease-out forwards;
         }
 
-        @keyframes shimmer { to { background-position: -200% 0; } }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-online {
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
     </style>
 </head>
-<body class="h-screen w-full flex flex-col">
+<body class="flex flex-col">
 
-    <!-- Слой загрузки -->
-    <div id="global-loader" class="fixed inset-0 z-[1000] bg-slate-950 flex items-center justify-center">
-        <div class="flex flex-col items-center">
-            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 animate-pulse">
-                <i data-lucide="zap" class="text-white w-8 h-8"></i>
+    <!-- Глобальный загрузчик системы -->
+    <div id="sys-boot-loader" class="fixed inset-0 z-[2000] bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="relative">
+            <div class="w-24 h-24 bg-blue-600 rounded-[2rem] flex items-center justify-center animate-pulse shadow-2xl shadow-blue-500/20">
+                <i data-lucide="zap" class="text-white w-12 h-12"></i>
             </div>
-            <div class="custom-loader"></div>
-            <p class="mt-4 text-slate-400 font-medium animate-pulse">Инициализация SmeshGram...</p>
+            <div class="absolute -bottom-2 -right-2 loader-ring"></div>
         </div>
+        <h2 class="mt-8 text-xl font-bold tracking-widest text-white uppercase">SmeshGram <span class="text-blue-500">OS</span></h2>
+        <p id="boot-status" class="mt-2 text-slate-500 text-sm font-mono">Loading modules...</p>
     </div>
 
-    <!-- Основной контейнер -->
-    <div id="app-container" class="hidden h-full flex flex-col">
+    <!-- Основной контейнер приложения -->
+    <div id="main-app-shell" class="hidden h-full flex flex-col">
         
-        <!-- Страница входа -->
-        <div id="view-auth" class="hidden fixed inset-0 z-[500] bg-slate-950 flex items-center justify-center p-4">
-            <div class="w-full max-w-md glass-panel rounded-[2rem] p-10 text-center shadow-2xl">
-                <div class="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                    <i data-lucide="shield-check" class="text-white w-10 h-10"></i>
-                </div>
-                <h1 class="text-3xl font-extrabold mb-2 text-white">Добро пожаловать</h1>
-                <p class="text-slate-400 mb-8">Введите ваш псевдоним, чтобы начать общение в защищенной сети</p>
+        <!-- СЕКЦИЯ: АВТОРИЗАЦИЯ -->
+        <section id="view-auth" class="hidden fixed inset-0 z-[1000] bg-slate-950 flex items-center justify-center p-6 bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')]">
+            <div class="w-full max-w-lg glass-panel rounded-[3rem] p-12 text-center shadow-2xl relative overflow-hidden">
+                <!-- Декор -->
+                <div class="absolute -top-24 -left-24 w-48 h-48 bg-blue-600/20 blur-[80px] rounded-full"></div>
                 
-                <div class="space-y-4">
-                    <div class="relative">
-                        <i data-lucide="user" class="absolute left-4 top-4 text-slate-500 w-5 h-5"></i>
-                        <input id="auth-username" type="text" placeholder="Ваше имя..." 
-                            class="w-full bg-slate-900 border border-slate-700 rounded-2xl py-4 pl-12 pr-6 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-white transition-all">
+                <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-700 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-xl">
+                    <i data-lucide="fingerprint" class="text-white w-12 h-12"></i>
+                </div>
+
+                <h1 class="text-4xl font-black mb-3 text-white">Вход в Сеть</h1>
+                <p class="text-slate-400 mb-10 leading-relaxed">Добро пожаловать обратно, Смеш. Введите идентификатор для синхронизации с облаком.</p>
+                
+                <div class="space-y-6">
+                    <div class="group">
+                        <div class="relative transition-all duration-300 transform group-focus-within:scale-[1.02]">
+                            <i data-lucide="at-sign" class="absolute left-5 top-5 text-slate-500 w-5 h-5"></i>
+                            <input id="input-username" type="text" placeholder="Ваш псевдоним..." 
+                                class="w-full bg-slate-900/50 border border-slate-800 rounded-2xl py-5 pl-14 pr-6 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-white font-medium placeholder:text-slate-600 transition-all">
+                        </div>
                     </div>
-                    <button id="btn-login" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95">
-                        <span>Войти в систему</span>
-                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+
+                    <button id="btn-login-action" class="group w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-4 transition-all active:scale-95 shadow-lg shadow-blue-900/40">
+                        <span id="btn-login-text">Подключиться</span>
+                        <i data-lucide="chevron-right" class="w-6 h-6 group-hover:translate-x-1 transition-transform"></i>
                     </button>
+                    
+                    <p class="text-[10px] text-slate-600 uppercase tracking-widest font-bold">End-to-end encrypted node connection</p>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Интерфейс мессенджера -->
-        <div id="view-messenger" class="hidden h-full flex overflow-hidden">
+        <!-- СЕКЦИЯ: МЕССЕНДЖЕР -->
+        <section id="view-main" class="hidden h-full flex overflow-hidden">
             
-            <!-- Левый Сайдбар -->
-            <aside class="w-80 lg:w-96 glass-panel border-r border-slate-800 flex flex-col">
-                <div class="p-6 flex items-center justify-between border-b border-slate-800/50">
-                    <div class="flex items-center gap-3">
-                        <div id="ui-my-avatar" class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white shadow-lg cursor-pointer hover:opacity-80 transition-opacity">?</div>
-                        <h2 class="font-bold text-xl">SmeshGram</h2>
+            <!-- Сайдбар -->
+            <aside class="w-80 lg:w-[400px] glass-panel border-r border-slate-800/50 flex flex-col z-20">
+                <!-- Профиль -->
+                <div class="p-8 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div id="user-avatar-main" class="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center font-black text-white text-xl shadow-lg cursor-pointer hover:rotate-6 transition-transform">?</div>
+                        <div>
+                            <h2 id="user-name-display" class="font-bold text-xl leading-tight">Смеш</h2>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                <span class="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">В сети</span>
+                            </div>
+                        </div>
                     </div>
-                    <button onclick="toggleSettings()" class="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                        <i data-lucide="settings-2" class="w-5 h-5 text-slate-400"></i>
+                    <button onclick="ui.toggleSettings(true)" class="p-3 hover:bg-slate-800/50 rounded-2xl transition-all">
+                        <i data-lucide="settings" class="w-6 h-6 text-slate-400"></i>
                     </button>
                 </div>
 
-                <!-- Поиск и Фильтры -->
-                <div class="p-4 space-y-4">
-                    <div class="relative">
-                        <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-500 w-4 h-4"></i>
-                        <input type="text" placeholder="Поиск сообщений..." class="w-full bg-slate-900 border-none rounded-xl py-2 pl-10 pr-4 text-sm outline-none focus:ring-1 focus:ring-blue-500">
-                    </div>
-                    <div class="flex gap-2">
-                        <button class="bg-blue-600/10 text-blue-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Все</button>
-                        <button class="hover:bg-slate-800 text-slate-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Личные</button>
-                        <button class="hover:bg-slate-800 text-slate-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Группы</button>
+                <!-- Поиск -->
+                <div class="px-8 mb-6">
+                    <div class="relative group">
+                        <i data-lucide="search" class="absolute left-4 top-3.5 text-slate-600 w-5 h-5 group-focus-within:text-blue-500 transition-colors"></i>
+                        <input type="text" placeholder="Поиск в SmeshGram..." 
+                            class="w-full bg-slate-900 border-none rounded-2xl py-3.5 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 text-white transition-all">
                     </div>
                 </div>
 
-                <!-- Список чатов -->
-                <div class="flex-1 overflow-y-auto" id="ui-chat-list">
-                    <div class="sidebar-item active p-4 flex items-center gap-4 cursor-pointer">
-                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                <!-- Навигация -->
+                <div class="flex-1 overflow-y-auto px-4" id="chat-list-scroll">
+                    <div class="mb-4 px-4 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Основные каналы</div>
+                    
+                    <div class="bg-blue-600/10 border-l-4 border-blue-500 p-5 rounded-2xl flex items-center gap-4 cursor-pointer mb-6 group transition-all">
+                        <div class="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                             <i data-lucide="globe" class="text-white w-6 h-6"></i>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="font-bold">Глобальный узел</span>
-                                <span class="text-[10px] text-blue-500 font-bold">LIVE</span>
+                            <div class="flex justify-between items-center mb-0.5">
+                                <span class="font-bold text-slate-100">Глобальный узел</span>
+                                <span class="text-[9px] bg-blue-500 text-white px-1.5 py-0.5 rounded font-bold">HQ</span>
                             </div>
-                            <p class="text-xs text-slate-500 truncate">Общий поток данных SmeshGram</p>
+                            <p class="text-xs text-slate-400 truncate">Центральный поток сообщений</p>
                         </div>
                     </div>
-                    
-                    <div class="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Онлайн пользователи</div>
-                    <div id="ui-online-users" class="space-y-1 px-2">
-                        <!-- Сюда попадут пользователи -->
+
+                    <div class="mb-4 px-4 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Пользователи онлайн</div>
+                    <div id="online-users-grid" class="space-y-2">
+                        <!-- Динамический список -->
                     </div>
                 </div>
 
-                <!-- Футер сайдбара -->
-                <div class="p-4 border-t border-slate-800/50 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span class="text-[10px] font-bold text-slate-500 uppercase">Сеть стабильна</span>
+                <!-- Нижняя панель сайдбара -->
+                <div class="p-6 border-t border-slate-800/50 flex items-center justify-between bg-slate-900/20">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase">SmeshGram v3.0</span>
+                        <span id="active-counter" class="text-xs font-medium text-blue-400">0 узлов активно</span>
                     </div>
-                    <button onclick="logout()" class="text-slate-500 hover:text-red-400 transition-colors">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <button onclick="actions.logout()" class="p-3 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
+                        <i data-lucide="power" class="w-5 h-5"></i>
                     </button>
                 </div>
             </aside>
 
-            <!-- Окно Чата -->
-            <main class="flex-1 flex flex-col bg-slate-950">
+            <!-- Окно контента -->
+            <main class="flex-1 flex flex-col bg-slate-950 relative">
                 <!-- Хедер чата -->
-                <header class="h-20 glass-panel border-b border-slate-800/50 px-8 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700">
-                            <i data-lucide="users" class="text-blue-500 w-6 h-6"></i>
+                <header class="h-24 glass-panel border-b border-slate-800/30 px-10 flex items-center justify-between z-10">
+                    <div class="flex items-center gap-5">
+                        <div class="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-blue-500 shadow-inner">
+                            <i data-lucide="cpu" class="w-8 h-8"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-lg">Глобальный поток</h3>
+                            <h3 class="font-black text-xl">Глобальный поток</h3>
                             <div class="flex items-center gap-2">
-                                <span class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Зашифровано</span>
-                                <span class="text-slate-600 text-xs">•</span>
-                                <span id="ui-participants-count" class="text-slate-500 text-xs">... участников</span>
+                                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                <span class="text-xs text-slate-500 font-medium">Безопасное соединение активно</span>
                             </div>
                         </div>
                     </div>
                     <div class="flex gap-4">
-                        <button class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"><i data-lucide="phone" class="w-5 h-5"></i></button>
-                        <button class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"><i data-lucide="video" class="w-5 h-5"></i></button>
-                        <button class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all"><i data-lucide="info" class="w-5 h-5"></i></button>
+                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all"><i data-lucide="video" class="w-5 h-5"></i></button>
+                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all"><i data-lucide="phone" class="w-5 h-5"></i></button>
+                        <button class="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
                     </div>
                 </header>
 
                 <!-- Сообщения -->
-                <div id="ui-messages-container" class="flex-1 overflow-y-auto p-8 space-y-6 flex flex-col bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
-                    <!-- Сообщения будут отрендерены здесь -->
+                <div id="chat-messages-container" class="flex-1 overflow-y-auto p-10 space-y-8 flex flex-col bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
+                    <!-- Рендеринг здесь -->
                 </div>
 
-                <!-- Панель ввода -->
-                <footer class="p-6 glass-panel">
-                    <div class="max-w-5xl mx-auto flex items-end gap-4">
-                        <div class="flex-1 bg-slate-900 border border-slate-800 rounded-[1.5rem] p-3 shadow-inner flex items-end">
-                            <button class="p-2 text-slate-500 hover:text-blue-500 transition-colors"><i data-lucide="plus-circle" class="w-6 h-6"></i></button>
-                            <textarea id="ui-message-input" rows="1" placeholder="Напишите Смеш-сообщение..." 
-                                class="flex-1 bg-transparent border-none outline-none text-white px-3 py-2 resize-none max-h-32 text-sm leading-relaxed"></textarea>
-                            <button class="p-2 text-slate-500 hover:text-blue-500 transition-colors"><i data-lucide="smile" class="w-6 h-6"></i></button>
+                <!-- Ввод сообщения -->
+                <footer class="p-8 glass-panel z-10">
+                    <div class="max-w-5xl mx-auto">
+                        <div class="relative flex items-end gap-5">
+                            <div class="flex-1 bg-slate-900/80 border border-slate-800 rounded-[2rem] p-4 flex items-end shadow-2xl focus-within:border-blue-500/50 transition-all">
+                                <button class="p-3 text-slate-500 hover:text-blue-500 transition-colors"><i data-lucide="paperclip" class="w-6 h-6"></i></button>
+                                <textarea id="input-msg" rows="1" placeholder="Введите ваше сообщение..." 
+                                    class="flex-1 bg-transparent border-none outline-none text-white px-4 py-3 resize-none max-h-48 text-base font-medium placeholder:text-slate-600"></textarea>
+                                <button class="p-3 text-slate-500 hover:text-blue-500 transition-colors"><i data-lucide="smile" class="w-6 h-6"></i></button>
+                            </div>
+                            <button id="btn-send-msg" class="w-16 h-16 bg-blue-600 hover:bg-blue-500 rounded-[1.8rem] flex items-center justify-center text-white shadow-xl shadow-blue-900/30 active:scale-90 transition-all transform">
+                                <i data-lucide="send" class="w-7 h-7"></i>
+                            </button>
                         </div>
-                        <button id="btn-send" class="w-14 h-14 bg-blue-600 hover:bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-900/20 active:scale-90 transition-all">
-                            <i data-lucide="send" class="w-6 h-6"></i>
-                        </button>
                     </div>
                 </footer>
             </main>
-        </div>
+        </section>
     </div>
 
-    <!-- Модалка Настроек -->
-    <div id="modal-settings" class="hidden fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="w-full max-w-md glass-panel rounded-[2.5rem] overflow-hidden animate-in zoom-in duration-300">
-            <div id="ui-settings-banner" class="h-32 bg-blue-600 transition-all duration-500 relative">
-                <button onclick="toggleSettings()" class="absolute top-4 right-4 p-2 bg-black/20 rounded-full text-white hover:bg-black/40"><i data-lucide="x" class="w-4 h-4"></i></button>
+    <!-- МОДАЛКА: НАСТРОЙКИ -->
+    <div id="modal-settings" class="hidden fixed inset-0 z-[3000] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-6">
+        <div class="w-full max-w-xl glass-panel rounded-[3.5rem] overflow-hidden shadow-2xl animate-in zoom-in duration-300">
+            <div id="settings-header-banner" class="h-40 bg-blue-600 relative transition-colors duration-700">
+                <button onclick="ui.toggleSettings(false)" class="absolute top-6 right-6 w-12 h-12 bg-black/30 backdrop-blur-md rounded-2xl text-white flex items-center justify-center hover:bg-black/50 transition-all"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-            <div class="p-8 -mt-12 text-center">
-                <div id="ui-settings-avatar" class="w-24 h-24 mx-auto rounded-[2rem] border-4 border-slate-950 bg-blue-600 flex items-center justify-center text-4xl font-bold text-white shadow-2xl">?</div>
-                <h3 id="ui-settings-name" class="mt-4 text-2xl font-bold">Имя пользователя</h3>
+            <div class="p-12 -mt-20 text-center">
+                <div id="settings-avatar-circle" class="w-32 h-32 mx-auto rounded-[3rem] border-8 border-slate-950 bg-blue-600 flex items-center justify-center text-5xl font-black text-white shadow-2xl transition-all duration-700">?</div>
+                <h3 id="settings-user-title" class="mt-6 text-3xl font-black text-white">Имя Пользователя</h3>
+                <p class="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">SmeshGram Member</p>
                 
-                <div class="mt-8 space-y-6 text-left">
+                <div class="mt-12 space-y-10 text-left">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Персонализация цвета</label>
-                        <div class="flex justify-between mt-3 bg-slate-900 p-3 rounded-2xl">
-                            <button onclick="changeTheme('#3b82f6')" class="w-10 h-10 rounded-xl bg-blue-500 hover:scale-110 transition-transform"></button>
-                            <button onclick="changeTheme('#8b5cf6')" class="w-10 h-10 rounded-xl bg-purple-500 hover:scale-110 transition-transform"></button>
-                            <button onclick="changeTheme('#ec4899')" class="w-10 h-10 rounded-xl bg-pink-500 hover:scale-110 transition-transform"></button>
-                            <button onclick="changeTheme('#10b981')" class="w-10 h-10 rounded-xl bg-emerald-500 hover:scale-110 transition-transform"></button>
-                            <button onclick="changeTheme('#f59e0b')" class="w-10 h-10 rounded-xl bg-amber-500 hover:scale-110 transition-transform"></button>
+                        <label class="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Схема узла (Цвет)</label>
+                        <div class="grid grid-cols-5 gap-4 mt-4 bg-slate-900/50 p-5 rounded-[2rem]">
+                            <button onclick="actions.updateTheme('#3b82f6')" class="w-full aspect-square rounded-2xl bg-blue-500 hover:scale-110 transition-transform"></button>
+                            <button onclick="actions.updateTheme('#8b5cf6')" class="w-full aspect-square rounded-2xl bg-purple-500 hover:scale-110 transition-transform"></button>
+                            <button onclick="actions.updateTheme('#f43f5e')" class="w-full aspect-square rounded-2xl bg-rose-500 hover:scale-110 transition-transform"></button>
+                            <button onclick="actions.updateTheme('#10b981')" class="w-full aspect-square rounded-2xl bg-emerald-500 hover:scale-110 transition-transform"></button>
+                            <button onclick="actions.updateTheme('#f59e0b')" class="w-full aspect-square rounded-2xl bg-amber-500 hover:scale-110 transition-transform"></button>
                         </div>
                     </div>
-                    <button onclick="toggleSettings()" class="w-full bg-slate-800 hover:bg-slate-700 py-4 rounded-2xl font-bold transition-colors">Вернуться к общению</button>
+                    
+                    <div class="flex flex-col gap-4">
+                        <button onclick="ui.toggleSettings(false)" class="w-full bg-white text-slate-950 hover:bg-slate-200 py-5 rounded-[1.5rem] font-black text-lg transition-all shadow-xl">Сохранить изменения</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
 <script type="module">
+    // Импорты Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // --- Стейт приложения ---
-    const APP_CONFIG = {
-        id: typeof __app_id !== 'undefined' ? __app_id : 'smeshgram-pro-node-1',
+    /**
+     * @section КОНСТАНТЫ И КОНФИГУРАЦИЯ
+     */
+    const CONFIG = {
+        appId: typeof __app_id !== 'undefined' ? __app_id : 'smeshgram-pro-node-v3',
         firebase: JSON.parse(__firebase_config)
     };
 
+    // Глобальное состояние приложения
     const state = {
+        ready: false,
         user: null,
         profile: {
-            name: localStorage.getItem('sg_name') || '',
-            color: localStorage.getItem('sg_color') || '#3b82f6'
+            name: localStorage.getItem('sg_v3_name') || '',
+            color: localStorage.getItem('sg_v3_color') || '#3b82f6'
         },
-        isSettingsOpen: false
+        onlineUsers: [],
+        messages: []
     };
 
-    // --- Инициализация Firebase ---
-    const app = initializeApp(APP_CONFIG.firebase);
+    /**
+     * @section ИНИЦИАЛИЗАЦИЯ СЕРВИСОВ
+     */
+    const app = initializeApp(CONFIG.firebase);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // --- UI Элементы ---
-    const nodes = {
-        loader: document.getElementById('global-loader'),
-        app: document.getElementById('app-container'),
+    // Ссылки на DOM узлы
+    const dom = {
+        bootLoader: document.getElementById('sys-boot-loader'),
+        bootStatus: document.getElementById('boot-status'),
+        appShell: document.getElementById('main-app-shell'),
         authView: document.getElementById('view-auth'),
-        messengerView: document.getElementById('view-messenger'),
-        usernameInput: document.getElementById('auth-username'),
-        btnLogin: document.getElementById('btn-login'),
-        msgInput: document.getElementById('ui-message-input'),
-        btnSend: document.getElementById('btn-send'),
-        msgContainer: document.getElementById('ui-messages-container'),
-        onlineList: document.getElementById('ui-online-users'),
-        myAvatar: document.getElementById('ui-my-avatar'),
-        participantsCount: document.getElementById('ui-participants-count')
+        mainView: document.getElementById('view-main'),
+        usernameInp: document.getElementById('input-username'),
+        btnLogin: document.getElementById('btn-login-action'),
+        btnLoginText: document.getElementById('btn-login-text'),
+        msgInp: document.getElementById('input-msg'),
+        btnSend: document.getElementById('btn-send-msg'),
+        chatBox: document.getElementById('chat-messages-container'),
+        onlineList: document.getElementById('online-users-grid'),
+        activeCounter: document.getElementById('active-counter'),
+        myAvatar: document.getElementById('user-avatar-main'),
+        myName: document.getElementById('user-name-display')
     };
 
-    // --- Логика Аутентификации ---
-    async function performAuth() {
+    /**
+     * @section ЛОГИКА ДЕЙСТВИЙ (ACTIONS)
+     */
+    const actions = {
+        
+        // Метод входа (Исправленный обработчик кнопки)
+        async login() {
+            const val = dom.usernameInp.value.trim();
+            if (val.length < 2) {
+                dom.usernameInp.classList.add('border-red-500', 'animate-shake');
+                setTimeout(() => dom.usernameInp.classList.remove('border-red-500', 'animate-shake'), 2000);
+                return;
+            }
+
+            // Блокируем кнопку, предотвращая повторные нажатия
+            dom.btnLogin.disabled = true;
+            dom.btnLogin.classList.add('btn-loading');
+            dom.btnLoginText.innerText = "Авторизация...";
+
+            try {
+                // Если сессии еще нет, создаем
+                if (!state.user) {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                }
+
+                state.profile.name = val;
+                localStorage.setItem('sg_v3_name', val);
+                
+                // Синхронизируем и входим
+                await this.syncPresence();
+                ui.renderView();
+            } catch (err) {
+                console.error("Login Failure:", err);
+                dom.btnLoginText.innerText = "Ошибка. Повтор...";
+                dom.btnLogin.disabled = false;
+                dom.btnLogin.classList.remove('btn-loading');
+            }
+        },
+
+        // Отправка сообщения
+        async sendMessage() {
+            const text = dom.msgInp.value.trim();
+            if (!text || !state.user) return;
+
+            dom.msgInp.value = '';
+            dom.msgInp.style.height = 'auto';
+
+            try {
+                await addDoc(collection(db, 'artifacts', CONFIG.appId, 'public', 'data', 'messages'), {
+                    text,
+                    sender: state.profile.name,
+                    color: state.profile.color,
+                    uid: state.user.uid,
+                    timestamp: serverTimestamp()
+                });
+            } catch (e) {
+                console.error("Message send failed:", e);
+            }
+        },
+
+        // Обновление темы
+        updateTheme(color) {
+            state.profile.color = color;
+            localStorage.setItem('sg_v3_color', color);
+            ui.applyTheme();
+            this.syncPresence();
+        },
+
+        // Синхронизация статуса
+        async syncPresence() {
+            if (!state.user || !state.profile.name) return;
+            try {
+                await setDoc(doc(db, 'artifacts', CONFIG.appId, 'public', 'data', 'presence', state.user.uid), {
+                    name: state.profile.name,
+                    color: state.profile.color,
+                    lastSeen: serverTimestamp()
+                }, { merge: true });
+            } catch (e) { console.error("Presence Sync Fail"); }
+        },
+
+        logout() {
+            if (confirm("Удалить локальные ключи и выйти?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+    };
+
+    /**
+     * @section ИНТЕРФЕЙС (UI)
+     */
+    const ui = {
+        renderView() {
+            if (state.profile.name && state.user) {
+                dom.authView.classList.add('hidden');
+                dom.mainView.classList.remove('hidden');
+                this.applyTheme();
+                this.startStreams();
+            } else {
+                dom.authView.classList.remove('hidden');
+                dom.mainView.classList.add('hidden');
+            }
+            lucide.createIcons();
+        },
+
+        applyTheme() {
+            dom.myAvatar.innerText = state.profile.name[0]?.toUpperCase() || '?';
+            dom.myAvatar.style.backgroundColor = state.profile.color;
+            dom.myName.innerText = state.profile.name;
+            
+            // Настройки
+            document.getElementById('settings-avatar-circle').innerText = state.profile.name[0]?.toUpperCase() || '?';
+            document.getElementById('settings-avatar-circle').style.backgroundColor = state.profile.color;
+            document.getElementById('settings-header-banner').style.backgroundColor = state.profile.color;
+            document.getElementById('settings-user-title').innerText = state.profile.name;
+        },
+
+        toggleSettings(open) {
+            const modal = document.getElementById('modal-settings');
+            modal.classList.toggle('hidden', !open);
+            lucide.createIcons();
+        },
+
+        startStreams() {
+            // Стрим сообщений
+            onSnapshot(query(collection(db, 'artifacts', CONFIG.appId, 'public', 'data', 'messages')), (snap) => {
+                dom.chatBox.innerHTML = '';
+                const messages = snap.docs
+                    .map(d => d.data())
+                    .sort((a,b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
+
+                messages.forEach(m => {
+                    const isMe = m.uid === state.user?.uid;
+                    const date = m.timestamp ? new Date(m.timestamp.toMillis()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '...';
+                    
+                    const div = document.createElement('div');
+                    div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} message-appear`;
+                    div.innerHTML = `
+                        <div class="max-w-[80%] lg:max-w-[60%] px-6 py-4 rounded-[1.8rem] ${isMe ? 'chat-bubble-me rounded-tr-none text-white' : 'chat-bubble-them rounded-tl-none text-slate-200'}">
+                            ${!isMe ? `<span class="text-[10px] font-black uppercase mb-2 block tracking-widest" style="color: ${m.color}">${m.sender}</span>` : ''}
+                            <p class="text-[15px] leading-relaxed whitespace-pre-wrap font-medium">${m.text}</p>
+                            <div class="flex items-center justify-end gap-1 mt-2 opacity-40">
+                                <span class="text-[9px] font-bold">${date}</span>
+                                ${isMe ? '<i data-lucide="check-check" class="w-3 h-3"></i>' : ''}
+                            </div>
+                        </div>
+                    `;
+                    dom.chatBox.appendChild(div);
+                });
+                dom.chatBox.scrollTop = dom.chatBox.scrollHeight;
+                lucide.createIcons();
+            });
+
+            // Стрим пользователей
+            onSnapshot(collection(db, 'artifacts', CONFIG.appId, 'public', 'data', 'presence'), (snap) => {
+                dom.onlineList.innerHTML = '';
+                dom.activeCounter.innerText = `${snap.size} узлов активно`;
+                
+                snap.docs.forEach(doc => {
+                    const u = doc.data();
+                    if (doc.id === state.user?.uid) return;
+                    
+                    const item = document.createElement('div');
+                    item.className = "flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-800/40 transition-all cursor-default group";
+                    item.innerHTML = `
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-white shadow-lg group-hover:scale-110 transition-transform" style="background-color: ${u.color}">
+                            ${u.name[0].toUpperCase()}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <span class="text-sm font-bold truncate text-slate-300">${u.name}</span>
+                                <div class="w-2 h-2 rounded-full bg-emerald-500 status-online"></div>
+                            </div>
+                            <p class="text-[10px] text-slate-600 font-bold uppercase tracking-tight">Active Node</p>
+                        </div>
+                    `;
+                    dom.onlineList.appendChild(item);
+                });
+            });
+        }
+    };
+
+    /**
+     * @section МОНТИРОВАНИЕ ПРИЛОЖЕНИЯ
+     */
+    window.onload = async () => {
+        dom.bootStatus.innerText = "Connecting to Firebase...";
+        
+        // 1. Инициализируем Auth
         try {
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                 await signInWithCustomToken(auth, __initial_auth_token);
             } else {
                 await signInAnonymously(auth);
             }
-        } catch (error) {
-            console.error("Auth Error:", error);
-            alert("Ошибка подключения к серверу");
+            dom.bootStatus.innerText = "Handshake successful...";
+        } catch(e) { 
+            dom.bootStatus.innerText = "Connection error. Retrying...";
+            console.error(e);
         }
-    }
 
-    onAuthStateChanged(auth, (user) => {
-        state.user = user;
-        nodes.loader.classList.add('hidden');
-        nodes.app.classList.remove('hidden');
-        
-        if (state.profile.name) {
-            showMessenger();
-        } else {
-            showAuth();
-        }
-    });
-
-    function showAuth() {
-        nodes.authView.classList.remove('hidden');
-        nodes.messengerView.classList.add('hidden');
-    }
-
-    function showMessenger() {
-        nodes.authView.classList.add('hidden');
-        nodes.messengerView.classList.remove('hidden');
-        syncProfileWithDB();
-        startDataStreams();
-        updateUIThemes();
-        lucide.createIcons();
-    }
-
-    // --- Обработчики событий ---
-    nodes.btnLogin.onclick = async () => {
-        const name = nodes.usernameInput.value.trim();
-        if (name.length < 2) {
-            nodes.usernameInput.classList.add('border-red-500');
-            return;
-        }
-        
-        state.profile.name = name;
-        localStorage.setItem('sg_name', name);
-        
-        // Показываем лоадер на кнопке
-        nodes.btnLogin.disabled = true;
-        nodes.btnLogin.innerHTML = `<div class="custom-loader"></div>`;
-        
-        if (!state.user) await performAuth();
-        showMessenger();
-    };
-
-    nodes.btnSend.onclick = sendMessage;
-    nodes.msgInput.onkeydown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
-    };
-
-    async function sendMessage() {
-        const text = nodes.msgInput.value.trim();
-        if (!text || !state.user) return;
-
-        nodes.msgInput.value = '';
-        nodes.msgInput.style.height = 'auto';
-
-        try {
-            await addDoc(collection(db, 'artifacts', APP_CONFIG.id, 'public', 'data', 'messages'), {
-                text,
-                sender: state.profile.name,
-                color: state.profile.color,
-                uid: state.user.uid,
-                timestamp: serverTimestamp()
-            });
-        } catch (e) {
-            console.error("Send Error:", e);
-        }
-    }
-
-    // --- Синхронизация данных ---
-    async function syncProfileWithDB() {
-        if (!state.user) return;
-        await setDoc(doc(db, 'artifacts', APP_CONFIG.id, 'public', 'data', 'presence', state.user.uid), {
-            name: state.profile.name,
-            color: state.profile.color,
-            lastSeen: serverTimestamp()
-        }, { merge: true });
-    }
-
-    function startDataStreams() {
-        // Стрим сообщений
-        onSnapshot(query(collection(db, 'artifacts', APP_CONFIG.id, 'public', 'data', 'messages')), (snap) => {
-            nodes.msgContainer.innerHTML = '';
-            const msgs = snap.docs
-                .map(d => d.data())
-                .sort((a,b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
-
-            msgs.forEach(m => {
-                const isMe = m.uid === state.user?.uid;
-                const date = m.timestamp ? new Date(m.timestamp.toMillis()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '...';
-                
-                const div = document.createElement('div');
-                div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`;
-                div.innerHTML = `
-                    <div class="max-w-[75%] px-4 py-3 rounded-2xl ${isMe ? 'chat-bubble-me rounded-tr-none' : 'chat-bubble-them rounded-tl-none text-slate-200'}">
-                        ${!isMe ? `<span class="text-[10px] font-black uppercase mb-1 block" style="color: ${m.color}">${m.sender}</span>` : ''}
-                        <p class="text-sm leading-relaxed whitespace-pre-wrap">${m.text}</p>
-                        <span class="text-[9px] mt-2 block opacity-50 text-right font-medium">${date}</span>
-                    </div>
-                `;
-                nodes.msgContainer.appendChild(div);
-            });
-            nodes.msgContainer.scrollTop = nodes.msgContainer.scrollHeight;
-        });
-
-        // Стрим пользователей
-        onSnapshot(collection(db, 'artifacts', APP_CONFIG.id, 'public', 'data', 'presence'), (snap) => {
-            nodes.onlineList.innerHTML = '';
-            nodes.participantsCount.innerText = `${snap.size} активных`;
+        // 2. Слушаем состояние
+        onAuthStateChanged(auth, (user) => {
+            state.user = user;
+            state.ready = true;
             
-            snap.docs.forEach(doc => {
-                const u = doc.data();
-                if (doc.id === state.user?.uid) return;
-                
-                const item = document.createElement('div');
-                item.className = "flex items-center gap-3 p-3 mx-2 rounded-xl hover:bg-slate-800/50 transition-all cursor-default group";
-                item.innerHTML = `
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg group-hover:scale-110 transition-transform" style="background-color: ${u.color}">
-                        ${u.name[0].toUpperCase()}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-bold truncate text-slate-300">${u.name}</span>
-                            <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
-                        </div>
-                        <p class="text-[10px] text-slate-500">В сети</p>
-                    </div>
-                `;
-                nodes.onlineList.appendChild(item);
-            });
+            // Убираем загрузчик
+            dom.bootLoader.classList.add('opacity-0');
+            setTimeout(() => {
+                dom.bootLoader.classList.add('hidden');
+                dom.appShell.classList.remove('hidden');
+                ui.renderView();
+            }, 500);
         });
-    }
 
-    // --- Функции Темы и Настроек ---
-    window.toggleSettings = () => {
-        state.isSettingsOpen = !state.isSettingsOpen;
-        const modal = document.getElementById('modal-settings');
-        modal.classList.toggle('hidden', !state.isSettingsOpen);
+        // 3. Биндим события
+        dom.btnLogin.addEventListener('click', () => actions.login());
+        dom.btnSend.addEventListener('click', () => actions.sendMessage());
         
-        if (state.isSettingsOpen) {
-            document.getElementById('ui-settings-name').innerText = state.profile.name;
-            document.getElementById('ui-settings-avatar').innerText = state.profile.name[0].toUpperCase();
-            document.getElementById('ui-settings-avatar').style.backgroundColor = state.profile.color;
-            document.getElementById('ui-settings-banner').style.backgroundColor = state.profile.color;
-        }
+        dom.msgInp.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                actions.sendMessage();
+            }
+        });
+
+        dom.msgInp.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Глобальные функции для HTML onclick
+        window.ui = ui;
+        window.actions = actions;
+        
+        lucide.createIcons();
     };
-
-    window.changeTheme = (color) => {
-        state.profile.color = color;
-        localStorage.setItem('sg_color', color);
-        updateUIThemes();
-        syncProfileWithDB();
-        // Визуальное обновление в модалке
-        document.getElementById('ui-settings-avatar').style.backgroundColor = color;
-        document.getElementById('ui-settings-banner').style.backgroundColor = color;
-    };
-
-    function updateUIThemes() {
-        nodes.myAvatar.innerText = state.profile.name[0]?.toUpperCase() || '?';
-        nodes.myAvatar.style.backgroundColor = state.profile.color;
-        nodes.myAvatar.style.boxShadow = `0 4px 15px ${state.profile.color}44`;
-    }
-
-    window.logout = () => {
-        if(confirm("Выйти из системы?")) {
-            localStorage.clear();
-            location.reload();
-        }
-    };
-
-    // Авто-расширение текстового поля
-    nodes.msgInput.oninput = function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    };
-
-    performAuth();
 </script>
 </body>
 </html>

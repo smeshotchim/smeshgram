@@ -3,181 +3,307 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmeshGram — Мессенджер нового поколения</title>
+    <title>SmeshGram — Messenger</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; color: #f1f5f9; margin: 0; }
+        .chat-bg { background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); }
+        .glass { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            scroll-behavior: smooth;
+        .device-btn.active {
+            background-color: #2563eb;
+            border-color: #3b82f6;
+            color: white;
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
         }
-
-        .glass {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .chat-item.active {
+            background-color: rgba(37, 99, 235, 0.1);
+            border-right: 4px solid #3b82f6;
         }
-
-        .hero-gradient {
-            background: radial-gradient(circle at top right, #3b82f6, transparent),
-                        radial-gradient(circle at bottom left, #1d4ed8, transparent);
-        }
-
-        .animate-float {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
-        .gradient-text {
-            background: linear-gradient(90deg, #60a5fa, #a855f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .img-msg { max-width: 100%; border-radius: 0.75rem; margin-top: 0.5rem; border: 1px solid rgba(255,255,255,0.1); }
+        .typing-dot { animation: typing 1.4s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%, 100% { opacity: 0.2; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-2px); } }
     </style>
 </head>
-<body class="bg-[#020617] text-slate-100 selection:bg-blue-500/30">
+<body class="h-screen overflow-hidden">
 
-    <!-- Header -->
-    <nav class="fixed w-full z-50 px-6 py-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center glass rounded-2xl px-6 py-3">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-bolt text-white text-sm"></i>
-                </div>
-                <span class="font-extrabold text-xl tracking-tight">SmeshGram</span>
+<div id="app" class="flex h-full">
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-slate-800 rounded-[2.5rem] p-8 shadow-2xl border border-slate-700 text-center">
+            <div class="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-900/40">
+                <i data-lucide="zap" class="text-white w-10 h-10"></i>
             </div>
-            <div class="hidden md:flex gap-8 text-sm font-semibold text-slate-400">
-                <a href="#features" class="hover:text-blue-400 transition-colors">Функции</a>
-                <a href="#install" class="hover:text-blue-400 transition-colors">Установка</a>
-                <a href="#about" class="hover:text-blue-400 transition-colors">О нас</a>
-            </div>
-            <!-- Ссылка на файл самого приложения -->
-            <a href="smeshgram.html" class="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded-xl text-sm font-bold transition-all transform active:scale-95">
-                Запустить
-            </a>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="relative pt-32 pb-20 px-6 overflow-hidden hero-gradient">
-        <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-            <div class="z-10">
-                <span class="bg-blue-500/10 text-blue-400 text-xs font-bold px-4 py-1.5 rounded-full border border-blue-500/20 mb-6 inline-block uppercase tracking-widest">Версия 2.6 уже доступна</span>
-                <h1 class="text-5xl md:text-7xl font-extrabold leading-tight mb-6">
-                    Общайся со <br> <span class="gradient-text">вкусом Смеша</span>
-                </h1>
-                <p class="text-slate-400 text-lg mb-8 max-w-lg">
-                    Первый мессенджер с человеческим лицом, встроенным ИИ и полной свободой самовыражения. Быстро, красиво, твое.
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <a href="smeshgram.html" class="bg-white text-slate-950 px-8 py-4 rounded-2xl font-bold text-center hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
-                        Начать пользоваться <i class="fas fa-arrow-right"></i>
-                    </a>
-                    <a href="#features" class="glass px-8 py-4 rounded-2xl font-bold text-center hover:bg-slate-800 transition-all">
-                        Узнать больше
-                    </a>
-                </div>
-            </div>
-            <div class="relative flex justify-center">
-                <div class="w-64 md:w-80 h-[500px] md:h-[600px] bg-slate-800 rounded-[3rem] border-8 border-slate-900 shadow-2xl relative overflow-hidden animate-float">
-                    <img src="https://images.unsplash.com/photo-1611606063065-ee7946f0787a?auto=format&fit=crop&q=80&w=600" alt="Интерфейс SmeshGram" class="w-full h-full object-cover opacity-80">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 flex flex-col justify-end p-6">
-                        <div class="bg-blue-600 p-3 rounded-xl mb-3 w-fit"><i class="fas fa-comment"></i></div>
-                        <p class="font-bold">Новое сообщение</p>
-                        <p class="text-xs text-slate-400">Павел: Привет, Смеш! Как дела?</p>
-                    </div>
-                </div>
-                <!-- Decor -->
-                <div class="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/20 blur-[100px] rounded-full"></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features -->
-    <section id="features" class="py-24 px-6">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Почему выбирают нас?</h2>
-                <p class="text-slate-400">Мы собрали всё самое лучшее в одном месте.</p>
-            </div>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="glass p-8 rounded-3xl hover:border-blue-500/50 transition-all">
-                    <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400 mb-6">
-                        <i class="fas fa-robot text-xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Smesh AI</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Встроенный умный помощник, который ответит на вопросы, поддержит беседу или просто пошутит.
-                    </p>
-                </div>
-                <div class="glass p-8 rounded-3xl hover:border-blue-500/50 transition-all">
-                    <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 mb-6">
-                        <i class="fas fa-mobile-screen text-xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">PWA Технология</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Установи SmeshGram как настоящее приложение прямо из браузера. Никаких App Store.
-                    </p>
-                </div>
-                <div class="glass p-8 rounded-3xl hover:border-blue-500/50 transition-all">
-                    <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 mb-6">
-                        <i class="fas fa-shield-halved text-xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Конфиденциальность</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Твои данные принадлежат только тебе. Мы не читаем твои сообщения.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Install Instruction -->
-    <section id="install" class="py-20 px-6 bg-slate-900/50">
-        <div class="max-w-4xl mx-auto glass p-10 md:p-16 rounded-[3rem] border-blue-500/20">
-            <div class="grid md:grid-cols-2 gap-12 items-center">
+            <h1 class="text-3xl font-bold mb-2">SmeshGram</h1>
+            <p class="text-slate-400 mb-6">Добро пожаловать в будущее</p>
+            
+            <div class="space-y-3 mb-6 text-left">
                 <div>
-                    <h2 class="text-3xl font-bold mb-6">Как установить на телефон?</h2>
-                    <ul class="space-y-6">
-                        <li class="flex gap-4">
-                            <div class="w-8 h-8 rounded-full bg-blue-600 flex shrink-0 items-center justify-center font-bold text-sm">1</div>
-                            <p class="text-slate-300 text-sm">Открой мессенджер в браузере Safari или Chrome.</p>
-                        </li>
-                        <li class="flex gap-4">
-                            <div class="w-8 h-8 rounded-full bg-blue-600 flex shrink-0 items-center justify-center font-bold text-sm">2</div>
-                            <p class="text-slate-300 text-sm">Нажми кнопку <b>"Поделиться"</b> (iOS) или <b>"Три точки"</b> (Android).</p>
-                        </li>
-                        <li class="flex gap-4">
-                            <div class="w-8 h-8 rounded-full bg-blue-600 flex shrink-0 items-center justify-center font-bold text-sm">3</div>
-                            <p class="text-slate-300 text-sm">Выбери пункт <b>"На экран Домой"</b> или <b>"Установить"</b>.</p>
-                        </li>
-                    </ul>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase ml-2 mb-1 block">Никнейм</label>
+                    <input id="login-input" type="text" placeholder="Ваше имя..." class="w-full bg-slate-700 border-none rounded-2xl py-4 px-6 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-white">
                 </div>
-                <div class="flex justify-center">
-                    <i class="fas fa-cloud-arrow-down text-[120px] text-blue-500 opacity-20"></i>
+            </div>
+
+            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-bold text-lg shadow-lg transition-transform active:scale-95">Войти</button>
+        </div>
+    </div>
+
+    <!-- Main Interface -->
+    <div id="main-interface" class="flex w-full h-full hidden">
+        <!-- Sidebar -->
+        <div class="w-full md:w-80 lg:w-96 flex flex-col border-r border-slate-800 bg-[#0f172a]">
+            <div class="p-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div id="user-avatar-top" onclick="toggleProfile()" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white cursor-pointer hover:scale-110 transition-transform shadow-lg"></div>
+                    <span class="font-extrabold text-xl tracking-tight">SmeshGram</span>
+                </div>
+                <button onclick="toggleProfile()" class="text-slate-500 hover:text-white p-2"><i data-lucide="settings"></i></button>
+            </div>
+            
+            <div id="chat-list" class="flex-1 overflow-y-auto custom-scrollbar">
+                <div onclick="selectChat('global')" id="chat-global" class="chat-item active p-4 flex items-center gap-4 cursor-pointer hover:bg-slate-800/50 transition-colors">
+                    <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/20">О</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-blue-400">Общий чат</span>
+                            <span class="text-[10px] text-slate-500 uppercase">Live</span>
+                        </div>
+                        <p class="text-sm text-slate-400 truncate">Все участники</p>
+                    </div>
+                </div>
+                <div class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2 border-t border-slate-800 pt-4">Онлайн</div>
+                <div id="users-online" class="space-y-1"></div>
+            </div>
+        </div>
+
+        <!-- Chat Window -->
+        <div class="flex-1 flex flex-col chat-bg relative bg-slate-900">
+            <div class="h-16 glass border-b border-slate-800 flex items-center justify-between px-6 z-10">
+                <div class="flex items-center gap-3">
+                    <div id="current-chat-avatar" class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white">О</div>
+                    <div>
+                        <h3 id="current-chat-name" class="font-bold text-sm text-white">Общий чат</h3>
+                        <div id="typing-status" class="text-[10px] text-blue-400 font-bold hidden">
+                            Печатает<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col custom-scrollbar"></div>
+
+            <div class="p-4 glass">
+                <form onsubmit="event.preventDefault(); sendMsg();" class="max-w-4xl mx-auto flex items-center gap-3 bg-slate-800 rounded-2xl p-2 px-4 border border-slate-700">
+                    <button type="button" onclick="promptImage()" class="text-slate-400 hover:text-blue-400"><i data-lucide="image"></i></button>
+                    <input id="message-input" type="text" placeholder="Написать..." class="flex-1 bg-transparent border-none outline-none py-2 text-sm text-white">
+                    <button type="submit" class="bg-blue-600 w-10 h-10 rounded-xl text-white shadow-lg flex items-center justify-center active:scale-90 transition-transform">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[200] flex items-center justify-center p-4 hidden">
+        <div class="bg-[#1e293b] w-full max-w-sm rounded-[2.5rem] overflow-hidden border border-slate-700 shadow-2xl">
+            <div id="profile-bg" class="h-32 bg-blue-600"></div>
+            <div class="px-6 pb-8 -mt-12">
+                <div id="profile-avatar" class="w-24 h-24 rounded-3xl border-8 border-[#1e293b] flex items-center justify-center text-4xl font-bold shadow-2xl text-white"></div>
+                <div class="mt-4">
+                    <h2 id="profile-name" class="text-2xl font-bold text-white">User</h2>
+                </div>
+                <div class="mt-8 space-y-4">
+                    <div class="flex gap-3 pt-4">
+                        <button onclick="toggleProfile()" class="flex-1 bg-blue-600 py-3 rounded-2xl font-bold text-white">Ок</button>
+                        <button onclick="logout()" class="flex-1 bg-slate-700 py-3 rounded-2xl font-bold text-red-400">Выйти</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</div>
 
-    <!-- Footer -->
-    <footer class="py-12 px-6 border-t border-slate-900">
-        <div class="max-w-7xl mx-auto flex flex-col md:row justify-between items-center gap-6">
-            <div class="flex items-center gap-2">
-                <div class="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-                    <i class="fas fa-bolt text-white text-[10px]"></i>
-                </div>
-                <span class="font-bold text-lg">SmeshGram</span>
-            </div>
-            <p class="text-slate-500 text-sm text-center">© 2026 SmeshGram Inc. Сделано для Смеша.</p>
-        </div>
-    </footer>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    const firebaseConfig = JSON.parse(__firebase_config);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'smeshgram-v4';
+
+    let currentUser = null;
+    let currentChatId = 'global';
+    let state = {
+        user: localStorage.getItem('smesh_user') || null,
+        color: '#2563eb'
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            if (state.user) {
+                updateUI();
+                registerUserPresence();
+            }
+            listenToMessages();
+            listenToUsers();
+            listenToTyping();
+        } else {
+            signInAnonymously(auth);
+        }
+    });
+
+    async function registerUserPresence() {
+        if (!currentUser || !state.user) return;
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), {
+            username: state.user,
+            color: state.color,
+            lastSeen: serverTimestamp()
+        }, { merge: true });
+    }
+
+    window.updateUI = () => {
+        if (state.user) {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('main-interface').classList.remove('hidden');
+            const initial = state.user[0].toUpperCase();
+            document.getElementById('user-avatar-top').innerText = initial;
+            document.getElementById('user-avatar-top').style.backgroundColor = state.color;
+            document.getElementById('profile-avatar').innerText = initial;
+            document.getElementById('profile-avatar').style.backgroundColor = state.color;
+            document.getElementById('profile-name').innerText = state.user;
+        }
+        lucide.createIcons();
+    };
+
+    window.login = () => {
+        const userVal = document.getElementById('login-input').value.trim();
+        if (userVal) {
+            state.user = userVal;
+            localStorage.setItem('smesh_user', userVal);
+            updateUI();
+            registerUserPresence();
+        }
+    };
+
+    window.promptImage = () => {
+        const url = prompt("Вставь ссылку на картинку:");
+        if (url) sendMsg(url, true);
+    };
+
+    window.selectChat = (chatId, name = 'Общий чат') => {
+        currentChatId = chatId;
+        document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+        if (chatId === 'global') {
+            document.getElementById('chat-global').classList.add('active');
+            document.getElementById('current-chat-name').innerText = 'Общий чат';
+            document.getElementById('current-chat-avatar').innerText = 'О';
+        } else {
+            const el = document.getElementById('user-' + chatId);
+            if (el) el.classList.add('active');
+            document.getElementById('current-chat-name').innerText = name;
+            document.getElementById('current-chat-avatar').innerText = name[0].toUpperCase();
+        }
+        listenToMessages();
+    };
+
+    window.logout = () => { localStorage.clear(); location.reload(); };
+    window.toggleProfile = () => document.getElementById('profile-modal').classList.toggle('hidden');
+
+    window.sendMsg = async (val = null, isImage = false) => {
+        const inp = document.getElementById('message-input');
+        const text = val || inp.value.trim();
+        if (!text || !currentUser) return;
+
+        const coll = currentChatId === 'global' ? 'messages' : `dm_${[currentUser.uid, currentChatId].sort().join('_')}`;
+        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', coll), {
+            text: text, isImage: isImage, sender: state.user, uid: currentUser.uid, timestamp: serverTimestamp()
+        });
+        if (!val) inp.value = '';
+        setTyping(false);
+    };
+
+    let typingTimeout;
+    document.getElementById('message-input').addEventListener('input', () => {
+        setTyping(true);
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => setTyping(false), 2000);
+    });
+
+    async function setTyping(status) {
+        if (!currentUser) return;
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'typing', currentUser.uid), {
+            isTyping: status, chat: currentChatId, username: state.user
+        }, { merge: true });
+    }
+
+    function listenToTyping() {
+        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'typing'), (snap) => {
+            const status = document.getElementById('typing-status');
+            const typers = snap.docs.filter(d => d.id !== currentUser.uid && d.data().isTyping && d.data().chat === currentChatId);
+            status.classList.toggle('hidden', typers.length === 0);
+        });
+    }
+
+    function listenToUsers() {
+        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
+            const container = document.getElementById('users-online');
+            container.innerHTML = '';
+            snap.docs.forEach(d => {
+                if (d.id === currentUser.uid) return;
+                const data = d.data();
+                const div = document.createElement('div');
+                div.id = 'user-' + d.id;
+                div.className = `chat-item p-3 mx-2 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-800 ${currentChatId === d.id ? 'active' : ''}`;
+                div.onclick = () => window.selectChat(d.id, data.username);
+                div.innerHTML = `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm" style="background-color: ${data.color || '#334155'}">${data.username[0].toUpperCase()}</div><div class="flex-1 truncate font-bold text-sm text-slate-200">${data.username}</div>`;
+                container.appendChild(div);
+            });
+        });
+    }
+
+    let msgUnsub = null;
+    function listenToMessages() {
+        if (msgUnsub) msgUnsub();
+        const coll = currentChatId === 'global' ? 'messages' : `dm_${[currentUser.uid, currentChatId].sort().join('_')}`;
+        msgUnsub = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', coll)), (snap) => {
+            const chat = document.getElementById('chat-messages');
+            chat.innerHTML = '';
+            const msgs = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
+            msgs.forEach(m => {
+                const isMine = m.uid === currentUser.uid;
+                const div = document.createElement('div');
+                div.className = `self-${isMine?'end':'start'} max-w-[75%] bg-${isMine?'blue-600':'slate-800'} p-3 rounded-2xl rounded-t${isMine?'l':'r'}-none text-white shadow-sm relative group`;
+                div.innerHTML = `
+                    ${!isMine && currentChatId==='global' ? `<div class="text-[10px] font-bold text-blue-400 mb-1">${m.sender}</div>`:''}
+                    ${m.isImage ? `<img src="${m.text}" class="img-msg">` : `<span>${m.text}</span>`}
+                    <div class="text-[9px] opacity-50 text-right mt-1">${m.timestamp ? new Date(m.timestamp.seconds*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '...'}</div>
+                    ${isMine ? `<button onclick="deleteMsg('${m.id}')" class="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`:''}
+                `;
+                chat.appendChild(div);
+            });
+            chat.scrollTop = chat.scrollHeight;
+            lucide.createIcons();
+        });
+    }
+
+    window.deleteMsg = async (mid) => {
+        if (confirm("Удалить?")) {
+            const coll = currentChatId === 'global' ? 'messages' : `dm_${[currentUser.uid, currentChatId].sort().join('_')}`;
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', coll, mid));
+        }
+    };
+</script>
 </body>
 </html>

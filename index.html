@@ -23,6 +23,9 @@
         /* Animation */
         .fade-in { animation: fadeIn 0.5s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        #messenger-app.hidden { display: none !important; }
+        #landing-page.hidden { display: none !important; }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -149,6 +152,39 @@
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ФУНКЦИЙ В ГЛОБАЛЬНУЮ ОБЛАСТЬ
+    window.startApp = () => {
+        console.log("App starting...");
+        document.getElementById('landing-page').classList.add('hidden');
+        const app = document.getElementById('messenger-app');
+        app.classList.remove('hidden');
+        app.style.display = 'flex';
+        
+        if (state.user) {
+            window.updateUI();
+        }
+        lucide.createIcons();
+    };
+
+    window.exitToLanding = () => {
+        document.getElementById('messenger-app').style.display = 'none';
+        document.getElementById('messenger-app').classList.add('hidden');
+        document.getElementById('landing-page').classList.remove('hidden');
+    };
+
+    window.login = () => {
+        const val = document.getElementById('login-input').value.trim();
+        if (val) {
+            state.user = val;
+            localStorage.setItem('smesh_user', val);
+            window.updateUI();
+            registerUserPresence();
+        } else {
+            alert("Пожалуйста, введите имя!");
+        }
+    };
+
+    // Firebase Setup
     const firebaseConfig = JSON.parse(__firebase_config);
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -163,21 +199,6 @@
     };
 
     lucide.createIcons();
-
-    // Export functions to global scope for HTML onclick
-    window.startApp = () => {
-        document.getElementById('landing-page').style.display = 'none';
-        document.getElementById('messenger-app').style.display = 'flex';
-        document.getElementById('messenger-app').classList.remove('hidden');
-        if (state.user) {
-            window.updateUI();
-        }
-    };
-
-    window.exitToLanding = () => {
-        document.getElementById('messenger-app').style.display = 'none';
-        document.getElementById('landing-page').style.display = 'block';
-    };
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -197,9 +218,13 @@
         if (!currentUser || !state.user) return;
         try {
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), {
-                username: state.user, color: state.color, lastSeen: serverTimestamp()
+                username: state.user, 
+                color: state.color, 
+                lastSeen: serverTimestamp()
             }, { merge: true });
-        } catch(e) {}
+        } catch(e) {
+            console.error("Presence error:", e);
+        }
     }
 
     window.updateUI = () => {
@@ -207,20 +232,12 @@
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('main-interface').classList.remove('hidden');
             const avatar = document.getElementById('user-avatar-top');
-            avatar.innerText = state.user[0].toUpperCase();
-            avatar.style.backgroundColor = state.color;
+            if(avatar) {
+                avatar.innerText = state.user[0].toUpperCase();
+                avatar.style.backgroundColor = state.color;
+            }
         }
         lucide.createIcons();
-    };
-
-    window.login = () => {
-        const val = document.getElementById('login-input').value.trim();
-        if (val) {
-            state.user = val;
-            localStorage.setItem('smesh_user', val);
-            window.updateUI();
-            registerUserPresence();
-        }
     };
 
     window.sendMsg = async (val = null, isImg = false) => {
@@ -231,14 +248,20 @@
         const coll = currentChatId === 'global' ? 'messages' : `dm_${[currentUser.uid, currentChatId].sort().join('_')}`;
         try {
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', coll), {
-                text, isImage: isImg, sender: state.user, uid: currentUser.uid, timestamp: serverTimestamp()
+                text, 
+                isImage: isImg, 
+                sender: state.user, 
+                uid: currentUser.uid, 
+                timestamp: serverTimestamp()
             });
             if (!val) inp.value = '';
-        } catch(e) {}
+        } catch(e) {
+            console.error("Send error:", e);
+        }
     };
 
     window.promptImage = () => {
-        const url = prompt("Ссылка на фото:");
+        const url = prompt("Введите прямую ссылку на изображение:");
         if (url) window.sendMsg(url, true);
     };
 
@@ -248,7 +271,8 @@
         if (id === 'global') {
             document.getElementById('chat-global').classList.add('active');
         } else {
-            document.getElementById('user-' + id)?.classList.add('active');
+            const el = document.getElementById('user-' + id);
+            if(el) el.classList.add('active');
         }
         document.getElementById('current-chat-name').innerText = name;
         document.getElementById('current-chat-avatar').innerText = name[0].toUpperCase();
@@ -258,6 +282,7 @@
     function listenToUsers() {
         onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
             const container = document.getElementById('users-online');
+            if(!container) return;
             container.innerHTML = '';
             snap.docs.forEach(d => {
                 if (d.id === currentUser?.uid) return;
@@ -266,10 +291,15 @@
                 div.id = 'user-' + d.id;
                 div.className = `chat-item p-3 mx-2 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-800 text-white ${currentChatId === d.id ? 'active' : ''}`;
                 div.onclick = () => window.selectChat(d.id, data.username);
-                div.innerHTML = `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md" style="background-color: ${data.color}">${data.username[0].toUpperCase()}</div><div class="flex-1 truncate font-bold text-sm">${data.username}</div>`;
+                div.innerHTML = `
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md" style="background-color: ${data.color}">
+                        ${data.username ? data.username[0].toUpperCase() : '?'}
+                    </div>
+                    <div class="flex-1 truncate font-bold text-sm">${data.username || 'Аноним'}</div>
+                `;
                 container.appendChild(div);
             });
-        }, (err) => {});
+        }, (err) => { console.error("Users sync error:", err); });
     }
 
     let msgUnsub = null;
@@ -278,20 +308,23 @@
         const coll = currentChatId === 'global' ? 'messages' : `dm_${[currentUser?.uid, currentChatId].sort().join('_')}`;
         msgUnsub = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', coll)), (snap) => {
             const chat = document.getElementById('chat-messages');
+            if(!chat) return;
             chat.innerHTML = '';
             const msgs = snap.docs.map(d => d.data()).sort((a,b) => (a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
             msgs.forEach(m => {
                 const mine = m.uid === currentUser?.uid;
                 const div = document.createElement('div');
-                div.className = `self-${mine?'end':'start'} max-w-[75%] bg-${mine?'blue-600':'slate-800'} p-3 rounded-2xl rounded-t${mine?'l':'r'}-none text-white shadow-sm fade-in`;
+                div.className = `flex flex-col ${mine?'items-end':'items-start'} w-full`;
                 div.innerHTML = `
-                    ${!mine && currentChatId==='global' ? `<div class="text-[10px] font-bold text-blue-400 mb-1">${m.sender}</div>`:''}
-                    ${m.isImage ? `<img src="${m.text}" class="img-msg">` : `<span>${m.text}</span>`}
+                    <div class="max-w-[75%] px-4 py-2 rounded-2xl shadow-sm fade-in ${mine ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none'}">
+                        ${!mine && currentChatId==='global' ? `<div class="text-[10px] font-bold text-blue-400 mb-1">${m.sender}</div>`:''}
+                        ${m.isImage ? `<img src="${m.text}" class="img-msg" onerror="this.src='https://placehold.co/200x150?text=Ошибка+загрузки'">` : `<span>${m.text}</span>`}
+                    </div>
                 `;
                 chat.appendChild(div);
             });
             chat.scrollTop = chat.scrollHeight;
-        }, (err) => {});
+        }, (err) => { console.error("Messages sync error:", err); });
     }
 </script>
 </body>

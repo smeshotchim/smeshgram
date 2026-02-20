@@ -9,7 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        body { font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; background-color: #020617; color: #f1f5f9; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; background-color: #020617; color: #f1f5f9; margin: 0; padding: 0; }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .hero-gradient { background: radial-gradient(circle at top right, #3b82f6, transparent), radial-gradient(circle at bottom left, #1d4ed8, transparent); }
         .gradient-text { background: linear-gradient(90deg, #60a5fa, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -17,18 +17,18 @@
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .typing-dot { animation: typing 1.4s infinite; }
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes typing { 0%, 100% { opacity: 0.2; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-2px); } }
         .chat-item.active { background-color: rgba(37, 99, 235, 0.1); border-right: 4px solid #3b82f6; }
         .img-msg { max-width: 100%; border-radius: 0.75rem; margin-top: 0.5rem; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Анимация появления */
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body class="overflow-x-hidden">
 
-<div id="landing-page">
-    <!-- Header -->
+<!-- БЛОК 1: САЙТ (LANDING) -->
+<div id="landing-page" class="min-h-screen">
     <nav class="fixed w-full z-50 px-6 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center glass rounded-2xl px-6 py-3">
             <div class="flex items-center gap-2">
@@ -38,8 +38,8 @@
                 <span class="font-extrabold text-xl tracking-tight">SmeshGram</span>
             </div>
             <div class="hidden md:flex gap-8 text-sm font-semibold text-slate-400">
-                <a href="#features" class="hover:text-blue-400 transition-colors">Функции</a>
-                <a href="#install" class="hover:text-blue-400 transition-colors">Установка</a>
+                <a href="#" class="hover:text-blue-400">Функции</a>
+                <a href="#" class="hover:text-blue-400">Установка</a>
             </div>
             <button onclick="startApp()" class="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded-xl text-sm font-bold transition-all transform active:scale-95">
                 Запустить
@@ -47,10 +47,9 @@
         </div>
     </nav>
 
-    <!-- Hero -->
-    <section class="relative pt-32 pb-20 px-6 overflow-hidden hero-gradient min-h-screen flex items-center">
+    <section class="relative pt-32 pb-20 px-6 hero-gradient min-h-screen flex items-center">
         <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-            <div class="z-10">
+            <div>
                 <span class="bg-blue-500/10 text-blue-400 text-xs font-bold px-4 py-1.5 rounded-full border border-blue-500/20 mb-6 inline-block uppercase tracking-widest">Версия 2.6 доступна</span>
                 <h1 class="text-5xl md:text-7xl font-extrabold leading-tight mb-6">
                     Общайся со <br> <span class="gradient-text">вкусом Смеша</span>
@@ -78,9 +77,9 @@
     </section>
 </div>
 
-<!-- Messenger Interface (Hidden by default) -->
-<div id="messenger-app" class="hidden fixed inset-0 z-[100] bg-slate-900 flex h-full">
-    <!-- Auth Screen -->
+<!-- БЛОК 2: ПРИЛОЖЕНИЕ (MESSENGER) -->
+<div id="messenger-app" class="hidden fixed inset-0 z-[100] bg-slate-900 flex h-full fade-in">
+    <!-- Экран входа -->
     <div id="auth-screen" class="fixed inset-0 z-[110] bg-slate-900 flex items-center justify-center p-4">
         <div class="w-full max-w-md bg-slate-800 rounded-[2.5rem] p-8 shadow-2xl border border-slate-700 text-center">
             <div class="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
@@ -93,16 +92,16 @@
         </div>
     </div>
 
-    <!-- Main Chat Interface -->
+    <!-- Основной интерфейс чата -->
     <div id="main-interface" class="flex w-full h-full hidden">
-        <!-- Sidebar -->
+        <!-- Боковая панель -->
         <div class="w-80 lg:w-96 flex flex-col border-r border-slate-800 bg-[#0f172a]">
             <div class="p-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div id="user-avatar-top" onclick="toggleProfile()" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white cursor-pointer hover:scale-110 transition-transform shadow-lg"></div>
-                    <span class="font-extrabold text-xl tracking-tight text-white">SmeshGram</span>
+                    <div id="user-avatar-top" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-lg"></div>
+                    <span class="font-extrabold text-xl tracking-tight text-white">Чат</span>
                 </div>
-                <button onclick="toggleProfile()" class="text-slate-500 hover:text-white p-2"><i data-lucide="settings"></i></button>
+                <button onclick="exitToLanding()" class="text-slate-500 hover:text-white p-2" title="На главную"><i data-lucide="home"></i></button>
             </div>
             
             <div id="chat-list" class="flex-1 overflow-y-auto custom-scrollbar">
@@ -111,17 +110,16 @@
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-center mb-1 text-white">
                             <span class="font-bold text-blue-400">Общий чат</span>
-                            <span class="text-[10px] text-slate-500 uppercase">Live</span>
                         </div>
                         <p class="text-sm text-slate-400 truncate">Все участники</p>
                     </div>
                 </div>
-                <div class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2 border-t border-slate-800 pt-4">Онлайн</div>
+                <div class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2 border-t border-slate-800 pt-4">Пользователи</div>
                 <div id="users-online" class="space-y-1"></div>
             </div>
         </div>
 
-        <!-- Chat Window -->
+        <!-- Окно сообщений -->
         <div class="flex-1 flex flex-col chat-bg relative bg-slate-900">
             <div class="h-16 glass border-b border-slate-800 flex items-center justify-between px-6 z-10">
                 <div class="flex items-center gap-3">
@@ -131,7 +129,6 @@
                         <div id="typing-status" class="text-[10px] text-blue-400 font-bold hidden">Печатает...</div>
                     </div>
                 </div>
-                <button onclick="location.reload()" class="text-slate-500 hover:text-white"><i data-lucide="home" class="w-5 h-5"></i></button>
             </div>
 
             <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col custom-scrollbar"></div>
@@ -150,7 +147,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = JSON.parse(__firebase_config);
     const app = initializeApp(firebaseConfig);
@@ -165,13 +162,21 @@
         color: '#2563eb'
     };
 
-    // Initialize Lucide icons
     lucide.createIcons();
 
+    // Функция переключения на приложение
     window.startApp = () => {
-        document.getElementById('landing-page').classList.add('hidden');
+        document.getElementById('landing-page').style.display = 'none';
         document.getElementById('messenger-app').classList.remove('hidden');
-        if (state.user) updateUI();
+        if (state.user) {
+            updateUI();
+        }
+    };
+
+    // Функция возврата на лендинг
+    window.exitToLanding = () => {
+        document.getElementById('messenger-app').classList.add('hidden');
+        document.getElementById('landing-page').style.display = 'block';
     };
 
     onAuthStateChanged(auth, (user) => {
@@ -183,7 +188,6 @@
             }
             listenToMessages();
             listenToUsers();
-            listenToTyping();
         } else {
             signInAnonymously(auth);
         }
@@ -200,9 +204,8 @@
         if (state.user) {
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('main-interface').classList.remove('hidden');
-            const initial = state.user[0].toUpperCase();
             const avatar = document.getElementById('user-avatar-top');
-            avatar.innerText = initial;
+            avatar.innerText = state.user[0].toUpperCase();
             avatar.style.backgroundColor = state.color;
         }
         lucide.createIcons();
@@ -253,13 +256,13 @@
             const container = document.getElementById('users-online');
             container.innerHTML = '';
             snap.docs.forEach(d => {
-                if (d.id === currentUser.uid) return;
+                if (d.id === currentUser?.uid) return;
                 const data = d.data();
                 const div = document.createElement('div');
                 div.id = 'user-' + d.id;
                 div.className = `chat-item p-3 mx-2 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-800 text-white ${currentChatId === d.id ? 'active' : ''}`;
                 div.onclick = () => window.selectChat(d.id, data.username);
-                div.innerHTML = `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style="background-color: ${data.color}">${data.username[0].toUpperCase()}</div><div class="flex-1 truncate font-bold text-sm">${data.username}</div>`;
+                div.innerHTML = `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md" style="background-color: ${data.color}">${data.username[0].toUpperCase()}</div><div class="flex-1 truncate font-bold text-sm">${data.username}</div>`;
                 container.appendChild(div);
             });
         });
@@ -268,13 +271,13 @@
     let msgUnsub = null;
     function listenToMessages() {
         if (msgUnsub) msgUnsub();
-        const coll = currentChatId === 'global' ? 'messages' : `dm_${[currentUser.uid, currentChatId].sort().join('_')}`;
+        const coll = currentChatId === 'global' ? 'messages' : `dm_${[currentUser?.uid, currentChatId].sort().join('_')}`;
         msgUnsub = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', coll)), (snap) => {
             const chat = document.getElementById('chat-messages');
             chat.innerHTML = '';
             const msgs = snap.docs.map(d => d.data()).sort((a,b) => (a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
             msgs.forEach(m => {
-                const mine = m.uid === currentUser.uid;
+                const mine = m.uid === currentUser?.uid;
                 const div = document.createElement('div');
                 div.className = `self-${mine?'end':'start'} max-w-[75%] bg-${mine?'blue-600':'slate-800'} p-3 rounded-2xl rounded-t${mine?'l':'r'}-none text-white shadow-sm`;
                 div.innerHTML = `
@@ -284,14 +287,6 @@
                 chat.appendChild(div);
             });
             chat.scrollTop = chat.scrollHeight;
-        });
-    }
-
-    function listenToTyping() {
-        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'typing'), (snap) => {
-            const status = document.getElementById('typing-status');
-            const typers = snap.docs.filter(d => d.id !== currentUser.uid && d.data().isTyping && d.data().chat === currentChatId);
-            status.classList.toggle('hidden', typers.length === 0);
         });
     }
 </script>

@@ -18,18 +18,21 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         .chat-item.active { background-color: rgba(37, 99, 235, 0.1); border-right: 4px solid #3b82f6; }
-        .img-msg { max-width: 100%; border-radius: 0.75rem; margin-top: 0.5rem; border: 1px solid rgba(255,255,255,0.1); }
         
-        /* Анимация появления */
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .hidden { display: none !important; }
+        
+        /* Стили для модалок */
+        .modal-overlay { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px); }
     </style>
 </head>
 <body class="overflow-x-hidden">
 
-<!-- БЛОК 1: САЙТ (LANDING) -->
-<div id="landing-page" class="min-h-screen">
-    <nav class="fixed w-full z-50 px-6 py-4">
+<!-- ЛЕНДИНГ -->
+<div id="landing-page" class="min-h-screen relative z-10">
+    <nav class="fixed w-full z-[60] px-6 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center glass rounded-2xl px-6 py-3">
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -37,11 +40,7 @@
                 </div>
                 <span class="font-extrabold text-xl tracking-tight">SmeshGram</span>
             </div>
-            <div class="hidden md:flex gap-8 text-sm font-semibold text-slate-400">
-                <a href="#" class="hover:text-blue-400">Функции</a>
-                <a href="#" class="hover:text-blue-400">Установка</a>
-            </div>
-            <button onclick="startApp()" class="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded-xl text-sm font-bold transition-all transform active:scale-95">
+            <button onclick="startApp()" class="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded-xl text-sm font-bold transition-all active:scale-95">
                 Запустить
             </button>
         </div>
@@ -50,26 +49,25 @@
     <section class="relative pt-32 pb-20 px-6 hero-gradient min-h-screen flex items-center">
         <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
             <div>
-                <span class="bg-blue-500/10 text-blue-400 text-xs font-bold px-4 py-1.5 rounded-full border border-blue-500/20 mb-6 inline-block uppercase tracking-widest">Версия 2.6 доступна</span>
+                <span class="bg-blue-500/10 text-blue-400 text-xs font-bold px-4 py-1.5 rounded-full border border-blue-500/20 mb-6 inline-block uppercase tracking-widest tracking-widest">Версия 2.6</span>
                 <h1 class="text-5xl md:text-7xl font-extrabold leading-tight mb-6">
                     Общайся со <br> <span class="gradient-text">вкусом Смеша</span>
                 </h1>
                 <p class="text-slate-400 text-lg mb-8 max-w-lg">
-                    Первый мессенджер с человеческим лицом и полной свободой. Быстро, красиво, твоё.
+                    Первый мессенджер с человеческим лицом. Быстро, красиво, надежно и только для своих.
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex gap-4">
                     <button onclick="startApp()" class="bg-white text-slate-950 px-8 py-4 rounded-2xl font-bold text-center hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
-                        Начать пользоваться <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        Начать общение <i data-lucide="arrow-right" class="w-5 h-5"></i>
                     </button>
                 </div>
             </div>
-            <div class="relative flex justify-center">
-                <div class="w-64 md:w-80 h-[500px] bg-slate-800 rounded-[3rem] border-8 border-slate-900 shadow-2xl relative overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1611606063065-ee7946f0787a?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover opacity-50">
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 flex flex-col justify-end p-6 text-white">
-                        <div class="bg-blue-600 p-2 rounded-lg mb-2 w-fit"><i data-lucide="message-square" class="w-4 h-4"></i></div>
-                        <p class="font-bold">SmeshGram</p>
-                        <p class="text-xs text-slate-400">Будущее уже здесь</p>
+            <div class="relative hidden md:flex justify-center">
+                <div class="w-72 h-[550px] bg-slate-800 rounded-[3rem] border-8 border-slate-900 shadow-2xl relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover opacity-40">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 flex flex-col justify-end p-8">
+                         <p class="text-2xl font-black mb-1 text-white">SmeshGram</p>
+                         <p class="text-slate-400 text-sm">Твое пространство свободы</p>
                     </div>
                 </div>
             </div>
@@ -77,68 +75,169 @@
     </section>
 </div>
 
-<!-- БЛОК 2: ПРИЛОЖЕНИЕ (MESSENGER) -->
-<div id="messenger-app" class="hidden fixed inset-0 z-[100] bg-slate-900 flex h-full fade-in">
-    <!-- Экран входа -->
-    <div id="auth-screen" class="fixed inset-0 z-[110] bg-slate-900 flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-slate-800 rounded-[2.5rem] p-8 shadow-2xl border border-slate-700 text-center">
-            <div class="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+<!-- ОКНО ПРИЛОЖЕНИЯ -->
+<div id="messenger-app" class="hidden fixed inset-0 z-[100] bg-slate-950 flex h-full overflow-hidden text-slate-200">
+    
+    <!-- ЭКРАН ВХОДА -->
+    <div id="auth-screen" class="absolute inset-0 z-[110] bg-slate-950 flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-slate-900 rounded-[2.5rem] p-10 shadow-2xl border border-slate-800 text-center fade-in">
+            <div class="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-blue-900/20">
                 <i data-lucide="zap" class="text-white w-10 h-10"></i>
             </div>
-            <h1 class="text-3xl font-bold mb-2 text-white">SmeshGram</h1>
-            <p class="text-slate-400 mb-6">Введите никнейм для входа</p>
-            <input id="login-input" type="text" placeholder="Ваше имя..." class="w-full bg-slate-700 border-none rounded-2xl py-4 px-6 mb-4 outline-none focus:ring-2 focus:ring-blue-500 text-white">
-            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-bold text-lg text-white">Войти</button>
+            <h1 class="text-3xl font-bold mb-2 text-white">Кто ты, воин?</h1>
+            <p class="text-slate-500 mb-8">Придумай никнейм, чтобы войти</p>
+            <input id="login-input" type="text" placeholder="Твое имя..." class="w-full bg-slate-800 border-2 border-slate-700 rounded-2xl py-4 px-6 mb-6 outline-none focus:border-blue-500 text-white text-lg transition-all">
+            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-bold text-lg text-white transition-all transform active:scale-95 shadow-xl shadow-blue-900/40">
+                Войти в SmeshGram
+            </button>
         </div>
     </div>
 
-    <!-- Основной интерфейс чата -->
-    <div id="main-interface" class="flex w-full h-full hidden">
+    <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
+    <div id="main-interface" class="hidden flex w-full h-full">
         <!-- Боковая панель -->
-        <div class="w-80 lg:w-96 flex flex-col border-r border-slate-800 bg-[#0f172a]">
-            <div class="p-4 flex items-center justify-between">
+        <div class="w-80 lg:w-96 flex flex-col border-r border-slate-800 bg-[#070b14]">
+            <div class="p-6 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div id="user-avatar-top" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-lg"></div>
-                    <span class="font-extrabold text-xl tracking-tight text-white">Чат</span>
+                    <button onclick="openProfile()" class="relative group">
+                        <div id="user-avatar-top" class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg bg-blue-600 transition-transform active:scale-90">S</div>
+                    </button>
+                    <span class="font-bold text-xl text-white tracking-tight">Чаты</span>
                 </div>
-                <button onclick="exitToLanding()" class="text-slate-500 hover:text-white p-2" title="На главную"><i data-lucide="home"></i></button>
+                <div class="flex gap-2">
+                    <button onclick="openProfile()" class="p-2 text-slate-500 hover:text-white transition-colors">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Поиск -->
+            <div class="px-6 mb-4">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 text-slate-500 w-4 h-4"></i>
+                    <input type="text" placeholder="Поиск Смешей..." class="w-full bg-slate-800/50 border-none rounded-xl py-2 pl-10 pr-4 focus:ring-1 focus:ring-blue-500 outline-none text-sm text-white">
+                </div>
             </div>
             
-            <div id="chat-list" class="flex-1 overflow-y-auto custom-scrollbar">
-                <div onclick="selectChat('global')" id="chat-global" class="chat-item active p-4 flex items-center gap-4 cursor-pointer hover:bg-slate-800/50 transition-colors">
-                    <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-bold text-white">О</div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
+                <!-- Глобальный чат -->
+                <div onclick="selectChat('global')" id="chat-global" class="chat-item active p-4 mx-2 rounded-2xl flex items-center gap-4 cursor-pointer hover:bg-slate-800/30 transition-all">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg">G</div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-center mb-1 text-white">
-                            <span class="font-bold text-blue-400">Общий чат</span>
+                        <div class="flex justify-between items-center mb-0.5">
+                            <span class="font-bold text-white">Общий чат</span>
+                            <span class="text-[10px] text-slate-500">LIVE</span>
                         </div>
-                        <p class="text-sm text-slate-400 truncate">Все участники</p>
+                        <p class="text-xs text-slate-500 truncate">Все Смеши здесь</p>
                     </div>
                 </div>
-                <div class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2 border-t border-slate-800 pt-4">Пользователи</div>
-                <div id="users-online" class="space-y-1"></div>
+
+                <div class="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em]">Контакты (Offline)</div>
+                <!-- Статичные контакты -->
+                <div id="static-contacts" class="space-y-1 px-2 mb-4">
+                    <div class="flex items-center gap-3 p-3 hover:bg-slate-800/20 rounded-xl cursor-not-allowed opacity-60">
+                        <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-slate-400">P</div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-slate-300">Павел Дуров</h4>
+                            <p class="text-[10px] text-slate-500">Был в сети недавно</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 hover:bg-slate-800/20 rounded-xl cursor-not-allowed opacity-60">
+                        <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-slate-400">M</div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-slate-300">Мама</h4>
+                            <p class="text-[10px] text-slate-500">В сети 2 часа назад</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 py-4 text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em]">Сейчас в сети</div>
+                <div id="users-online" class="space-y-1 px-2">
+                    <!-- Активные пользователи из Firebase -->
+                </div>
+            </div>
+
+            <!-- Кнопка выхода -->
+            <div class="p-4 border-t border-slate-800">
+                <button onclick="exitToLanding()" class="w-full flex items-center justify-center gap-2 py-2 text-slate-500 hover:text-red-400 transition-colors text-sm font-semibold">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Выйти из аккаунта
+                </button>
             </div>
         </div>
 
         <!-- Окно сообщений -->
-        <div class="flex-1 flex flex-col chat-bg relative bg-slate-900">
+        <div class="flex-1 flex flex-col chat-bg bg-slate-950 relative">
             <div class="h-16 glass border-b border-slate-800 flex items-center justify-between px-6 z-10">
                 <div class="flex items-center gap-3">
-                    <div id="current-chat-avatar" class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white">О</div>
+                    <div id="current-chat-avatar" class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">G</div>
                     <div>
-                        <h3 id="current-chat-name" class="font-bold text-sm text-white">Общий чат</h3>
-                        <div id="typing-status" class="text-[10px] text-blue-400 font-bold hidden">Печатает...</div>
+                        <h3 id="current-chat-name" class="font-bold text-white text-sm">Общий чат</h3>
+                        <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Online</p>
                     </div>
+                </div>
+                <div class="flex gap-4">
+                    <button class="text-slate-400 hover:text-white"><i data-lucide="phone" class="w-5 h-5"></i></button>
+                    <button class="text-slate-400 hover:text-white"><i data-lucide="more-vertical" class="w-5 h-5"></i></button>
                 </div>
             </div>
 
-            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col custom-scrollbar"></div>
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col custom-scrollbar">
+                <!-- Сообщения будут тут -->
+            </div>
 
+            <!-- Ввод сообщения -->
             <div class="p-4 glass">
-                <form onsubmit="event.preventDefault(); sendMsg();" class="max-w-4xl mx-auto flex items-center gap-3 bg-slate-800 rounded-2xl p-2 px-4 border border-slate-700">
-                    <button type="button" onclick="promptImage()" class="text-slate-400 hover:text-blue-400"><i data-lucide="image"></i></button>
-                    <input id="message-input" type="text" placeholder="Написать..." class="flex-1 bg-transparent border-none outline-none py-2 text-sm text-white">
-                    <button type="submit" class="bg-blue-600 w-10 h-10 rounded-xl text-white flex items-center justify-center"><i data-lucide="send" class="w-5 h-5"></i></button>
-                </form>
+                <div class="max-w-4xl mx-auto flex items-center gap-3">
+                    <div class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-2 pl-4 flex items-center focus-within:border-blue-500 transition-all shadow-2xl">
+                        <button class="text-slate-500 hover:text-blue-400 mr-2"><i data-lucide="smile" class="w-5 h-5"></i></button>
+                        <input id="message-input" type="text" placeholder="Написать сообщение..." class="flex-1 bg-transparent border-none outline-none py-2 text-white text-sm">
+                        <button class="text-slate-500 hover:text-blue-400 ml-2 mr-2"><i data-lucide="paperclip" class="w-5 h-5"></i></button>
+                    </div>
+                    <button onclick="sendMsg()" class="bg-blue-600 hover:bg-blue-500 w-12 h-12 rounded-2xl text-white flex items-center justify-center transition-all active:scale-90 shadow-lg shadow-blue-900/20">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ПРОФИЛЯ -->
+<div id="profile-modal" class="hidden fixed inset-0 z-[200] modal-overlay flex items-center justify-center p-4">
+    <div class="bg-slate-900 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-800 animate-in zoom-in duration-200">
+        <div id="profile-header-bg" class="h-32 bg-blue-600 transition-colors duration-500"></div>
+        <div class="px-6 pb-8 -mt-12">
+            <div class="relative inline-block">
+                <div id="profile-avatar-big" class="w-24 h-24 rounded-3xl flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-slate-900 bg-blue-600">S</div>
+                <div class="absolute -bottom-2 -right-2 bg-blue-600 p-2 rounded-xl border-4 border-slate-900 text-white cursor-pointer hover:bg-blue-500">
+                    <i data-lucide="camera" class="w-4 h-4"></i>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <h2 id="profile-display-name" class="text-2xl font-bold text-white">Имя Пользователя</h2>
+                <p id="profile-display-tag" class="text-slate-500 text-sm">@smesh_user</p>
+                
+                <div class="mt-8 space-y-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1 tracking-widest">Никнейм</label>
+                        <input id="profile-name-input" type="text" class="w-full bg-slate-800 border-none rounded-xl py-3 px-4 mt-1 text-sm outline-none text-white focus:ring-1 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1 tracking-widest">Цвет профиля</label>
+                        <div class="flex gap-3 mt-2">
+                            <button onclick="setTheme('#3b82f6')" class="w-8 h-8 rounded-full bg-blue-500 ring-2 ring-transparent hover:ring-white/50 transition-all"></button>
+                            <button onclick="setTheme('#a855f7')" class="w-8 h-8 rounded-full bg-purple-500 ring-2 ring-transparent hover:ring-white/50 transition-all"></button>
+                            <button onclick="setTheme('#f43f5e')" class="w-8 h-8 rounded-full bg-rose-500 ring-2 ring-transparent hover:ring-white/50 transition-all"></button>
+                            <button onclick="setTheme('#10b981')" class="w-8 h-8 rounded-full bg-emerald-500 ring-2 ring-transparent hover:ring-white/50 transition-all"></button>
+                            <button onclick="setTheme('#f97316')" class="w-8 h-8 rounded-full bg-orange-500 ring-2 ring-transparent hover:ring-white/50 transition-all"></button>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-8">
+                        <button onclick="saveProfile()" class="flex-1 bg-blue-600 hover:bg-blue-500 py-3 rounded-2xl font-bold text-white transition-all shadow-lg shadow-blue-900/20">Сохранить</button>
+                        <button onclick="closeProfile()" class="flex-1 bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl font-bold text-slate-300 transition-all">Закрыть</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -146,149 +245,209 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, collection, query, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // 1. КОНФИГ
     const firebaseConfig = JSON.parse(__firebase_config);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'smeshgram-v2-production';
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'smeshgram-v4';
 
     let currentUser = null;
-    let currentChatId = 'global';
     let state = {
-        user: localStorage.getItem('smesh_user') || null,
-        color: '#2563eb'
+        name: localStorage.getItem('smesh_user_name') || '',
+        color: localStorage.getItem('smesh_user_color') || '#2563eb'
     };
 
-    lucide.createIcons();
-
-    // Функция переключения на приложение
-    window.startApp = () => {
-        document.getElementById('landing-page').style.display = 'none';
+    // 2. ГЛОБАЛЬНЫЕ ФУНКЦИИ ИНТЕРФЕЙСА
+    window.startApp = function() {
+        document.getElementById('landing-page').classList.add('hidden');
         document.getElementById('messenger-app').classList.remove('hidden');
-        if (state.user) {
-            updateUI();
-        }
-    };
-
-    // Функция возврата на лендинг
-    window.exitToLanding = () => {
-        document.getElementById('messenger-app').classList.add('hidden');
-        document.getElementById('landing-page').style.display = 'block';
-    };
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUser = user;
-            if (state.user) {
-                updateUI();
-                registerUserPresence();
-            }
-            listenToMessages();
-            listenToUsers();
-        } else {
-            signInAnonymously(auth);
-        }
-    });
-
-    async function registerUserPresence() {
-        if (!currentUser || !state.user) return;
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), {
-            username: state.user, color: state.color, lastSeen: serverTimestamp()
-        }, { merge: true });
-    }
-
-    window.updateUI = () => {
-        if (state.user) {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('main-interface').classList.remove('hidden');
-            const avatar = document.getElementById('user-avatar-top');
-            avatar.innerText = state.user[0].toUpperCase();
-            avatar.style.backgroundColor = state.color;
+        if (state.name) {
+            window.updateUI();
         }
         lucide.createIcons();
     };
 
-    window.login = () => {
-        const val = document.getElementById('login-input').value.trim();
-        if (val) {
-            state.user = val;
-            localStorage.setItem('smesh_user', val);
-            updateUI();
-            registerUserPresence();
+    window.exitToLanding = function() {
+        if(confirm("Вы уверены, что хотите выйти?")) {
+            localStorage.removeItem('smesh_user_name');
+            location.reload();
         }
     };
 
-    window.sendMsg = async (val = null, isImg = false) => {
+    window.login = function() {
+        const name = document.getElementById('login-input').value.trim();
+        if (name.length < 2) return alert("Имя слишком короткое!");
+        state.name = name;
+        localStorage.setItem('smesh_user_name', name);
+        window.updateUI();
+        registerPresence();
+    };
+
+    window.updateUI = function() {
+        if (!state.name) return;
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('main-interface').classList.remove('hidden');
+        
+        // Обновляем аватары и текст
+        const avTop = document.getElementById('user-avatar-top');
+        const avBig = document.getElementById('profile-avatar-big');
+        const headerBg = document.getElementById('profile-header-bg');
+        const displayTag = document.getElementById('profile-display-tag');
+        const displayName = document.getElementById('profile-display-name');
+        
+        avTop.innerText = state.name[0].toUpperCase();
+        avBig.innerText = state.name[0].toUpperCase();
+        displayName.innerText = state.name;
+        displayTag.innerText = `@${state.name.toLowerCase().replace(/\s/g, '_')}`;
+        
+        // Применяем тему
+        avTop.style.backgroundColor = state.color;
+        avBig.style.backgroundColor = state.color;
+        headerBg.style.backgroundColor = state.color;
+        
+        document.getElementById('profile-name-input').value = state.name;
+        lucide.createIcons();
+    };
+
+    window.openProfile = function() {
+        document.getElementById('profile-modal').classList.remove('hidden');
+    };
+
+    window.closeProfile = function() {
+        document.getElementById('profile-modal').classList.add('hidden');
+    };
+
+    window.setTheme = function(color) {
+        state.color = color;
+        localStorage.setItem('smesh_user_color', color);
+        window.updateUI();
+    };
+
+    window.saveProfile = async function() {
+        const newName = document.getElementById('profile-name-input').value.trim();
+        if (newName.length < 2) return;
+        state.name = newName;
+        localStorage.setItem('smesh_user_name', newName);
+        window.updateUI();
+        await registerPresence();
+        window.closeProfile();
+    };
+
+    window.sendMsg = async function() {
         const inp = document.getElementById('message-input');
-        const text = val || inp.value.trim();
+        const text = inp.value.trim();
         if (!text || !currentUser) return;
 
-        const coll = currentChatId === 'global' ? 'messages' : `dm_${[currentUser.uid, currentChatId].sort().join('_')}`;
-        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', coll), {
-            text, isImage: isImg, sender: state.user, uid: currentUser.uid, timestamp: serverTimestamp()
-        });
-        if (!val) inp.value = '';
+        try {
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                text,
+                sender: state.name,
+                uid: currentUser.uid,
+                color: state.color,
+                timestamp: serverTimestamp()
+            });
+            inp.value = '';
+        } catch (e) { console.error("Ошибка отправки:", e); }
     };
 
-    window.promptImage = () => {
-        const url = prompt("Ссылка на фото:");
-        if (url) sendMsg(url, true);
-    };
-
-    window.selectChat = (id, name = 'Общий чат') => {
-        currentChatId = id;
-        document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
-        if (id === 'global') {
-            document.getElementById('chat-global').classList.add('active');
-        } else {
-            document.getElementById('user-' + id)?.classList.add('active');
+    // Обработка Enter
+    document.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !document.getElementById('main-interface').classList.contains('hidden')) {
+            window.sendMsg();
         }
-        document.getElementById('current-chat-name').innerText = name;
-        document.getElementById('current-chat-avatar').innerText = name[0].toUpperCase();
-        listenToMessages();
+    });
+
+    // 3. FIREBASE LOGIC
+    const initAuth = async () => {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+            await signInAnonymously(auth);
+        }
     };
+    initAuth();
 
-    function listenToUsers() {
-        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
-            const container = document.getElementById('users-online');
-            container.innerHTML = '';
-            snap.docs.forEach(d => {
-                if (d.id === currentUser?.uid) return;
-                const data = d.data();
-                const div = document.createElement('div');
-                div.id = 'user-' + d.id;
-                div.className = `chat-item p-3 mx-2 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-slate-800 text-white ${currentChatId === d.id ? 'active' : ''}`;
-                div.onclick = () => window.selectChat(d.id, data.username);
-                div.innerHTML = `<div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md" style="background-color: ${data.color}">${data.username[0].toUpperCase()}</div><div class="flex-1 truncate font-bold text-sm">${data.username}</div>`;
-                container.appendChild(div);
-            });
-        });
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            if (state.name) {
+                window.updateUI();
+                registerPresence();
+            }
+            startListeners();
+        }
+    });
+
+    async function registerPresence() {
+        if (!currentUser || !state.name) return;
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), {
+            name: state.name,
+            color: state.color,
+            lastSeen: serverTimestamp()
+        }, { merge: true });
     }
 
-    let msgUnsub = null;
-    function listenToMessages() {
-        if (msgUnsub) msgUnsub();
-        const coll = currentChatId === 'global' ? 'messages' : `dm_${[currentUser?.uid, currentChatId].sort().join('_')}`;
-        msgUnsub = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', coll)), (snap) => {
-            const chat = document.getElementById('chat-messages');
-            chat.innerHTML = '';
-            const msgs = snap.docs.map(d => d.data()).sort((a,b) => (a.timestamp?.seconds||0)-(b.timestamp?.seconds||0));
+    function startListeners() {
+        if (!currentUser) return;
+
+        // Сообщения
+        onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'messages')), (snap) => {
+            const box = document.getElementById('chat-messages');
+            box.innerHTML = '';
+            
+            const msgs = snap.docs
+                .map(d => d.data())
+                .sort((a,b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
+            
             msgs.forEach(m => {
-                const mine = m.uid === currentUser?.uid;
+                const isMe = m.uid === currentUser.uid;
                 const div = document.createElement('div');
-                div.className = `self-${mine?'end':'start'} max-w-[75%] bg-${mine?'blue-600':'slate-800'} p-3 rounded-2xl rounded-t${mine?'l':'r'}-none text-white shadow-sm`;
+                div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} fade-in mb-1`;
+                
                 div.innerHTML = `
-                    ${!mine && currentChatId==='global' ? `<div class="text-[10px] font-bold text-blue-400 mb-1">${m.sender}</div>`:''}
-                    ${m.isImage ? `<img src="${m.text}" class="img-msg">` : `<span>${m.text}</span>`}
+                    <div class="max-w-[80%] px-4 py-2 rounded-2xl shadow-sm ${isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none'}">
+                        ${!isMe ? `<div class="text-[10px] font-bold mb-1 uppercase" style="color: ${m.color || '#60a5fa'}">${m.sender}</div>` : ''}
+                        <p class="text-sm leading-relaxed">${m.text}</p>
+                        <div class="text-[8px] mt-1 opacity-50 text-right">
+                            ${m.timestamp ? new Date(m.timestamp.toMillis()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...'}
+                        </div>
+                    </div>
                 `;
-                chat.appendChild(div);
+                box.appendChild(div);
             });
-            chat.scrollTop = chat.scrollHeight;
-        });
+            box.scrollTop = box.scrollHeight;
+        }, (err) => console.error("Msg Error:", err));
+
+        // Список пользователей
+        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
+            const list = document.getElementById('users-online');
+            list.innerHTML = '';
+            snap.docs.forEach(d => {
+                const u = d.data();
+                if (d.id === currentUser.uid) return;
+                const div = document.createElement('div');
+                div.className = "flex items-center gap-3 p-3 hover:bg-slate-800/40 rounded-xl cursor-default transition-all fade-in";
+                div.innerHTML = `
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs text-white shadow-inner" style="background-color: ${u.color || '#334155'}">
+                        ${u.name[0].toUpperCase()}
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-sm font-bold text-slate-200">${u.name}</h4>
+                        <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-tighter italic">Online</p>
+                    </div>
+                    <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                `;
+                list.appendChild(div);
+            });
+        }, (err) => console.error("User List Error:", err));
     }
+
+    // Первоначальный рендер иконок
+    lucide.createIcons();
 </script>
 </body>
 </html>
